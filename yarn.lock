@@ -1870,6 +1870,11 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
+"@supersami/rn-foreground-service@^2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@supersami/rn-foreground-service/-/rn-foreground-service-2.2.1.tgz#0f80c2daacf96eb33016ac45f4f3e5549f5193e1"
+  integrity sha512-uqCzXv/MgcKbL2xc4zYwwo/NNatyjZX6KDyUXJoyXl8jQYjHno7zjDsIpbOEbLXZV7B/4NCVc7l8eoB8q7C7aA==
+
 "@types/babel__core@^7.1.14":
   version "7.20.5"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.20.5.tgz#3df15f27ba85319caa07ba08d0721889bb39c017"

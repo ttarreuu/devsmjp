@@ -57,8 +57,7 @@ const App = () => {
     }
   }
   
-  {/*
-  // check permission status on async storage
+  {/* check permission status on async storage
   const readStatus = async () => {
     try {
       const value = await AsyncStorage.getItem('PermissionStatus');
@@ -68,8 +67,7 @@ const App = () => {
     }catch (e) {
       console.log('data not found!');
     }
-  }
-  */}
+  } */}
 
   return (
     <NavigationContainer>
