@@ -6,15 +6,14 @@ import Geolocation from 'react-native-geolocation-service';
 import { PermissionsAndroid } from 'react-native';
 
 const App = () => {
-  
   useEffect(() => {
     requestLocationPermission();
-  });
+  }, []);
 
   const requestLocationPermission = async () => {
     Geolocation.requestAuthorization('always');
     try {
-      const granted = await PermissionsAndroid.request(
+      const fineLocationGranted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
           title: 'Location Permission',
@@ -22,58 +21,48 @@ const App = () => {
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
-        },
+        }
       );
-  
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Location permission granted');
-        updatePermissionStatus('granted');
-      } else {
-        console.log('Location permission denied');
-        updatePermissionStatus('denied');
-      }
-  
-      await PermissionsAndroid.request(
+
+      const backgroundLocationGranted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
         {
           title: 'Background Location Permission',
-          message: 'We need access to your location so you can get live quality updates.',
+          message: 'App needs access to your background location.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
-        },
-      ); 
+        }
+      );
+
+      if (
+        fineLocationGranted === PermissionsAndroid.RESULTS.GRANTED &&
+        backgroundLocationGranted === PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        console.log('Location permissions granted');
+        updatePermissionStatus(true);
+      } else {
+        console.log('Location permissions denied');
+        updatePermissionStatus(false);
+      }
     } catch (err) {
-      console.warn(err);
+      console.warn('Permission request error:', err);
     }
   };
 
-  const updatePermissionStatus = async (val: string) => {
+  const updatePermissionStatus = async (val: boolean) => {
     try {
-      await AsyncStorage.setItem('PermissionStatus', val);
-      // readStatus();
+      await AsyncStorage.setItem('PermissionStatus', JSON.stringify(val));
     } catch (e) {
-      console.log('saving error!')
+      console.log('Error saving permission status:', e);
     }
-  }
-  
-  {/* check permission status on async storage
-  const readStatus = async () => {
-    try {
-      const value = await AsyncStorage.getItem('PermissionStatus');
-      if(value !== null){
-        console.log(value);
-      }
-    }catch (e) {
-      console.log('data not found!');
-    }
-  } */}
+  };
 
   return (
     <NavigationContainer>
       <BottomTabNavigator />
     </NavigationContainer>
-  )
+  );
 };
 
 export default App;
