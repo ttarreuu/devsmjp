@@ -7,7 +7,7 @@ import { PermissionsAndroid } from 'react-native';
 
 const App = () => {
   useEffect(() => {
-    requestLocationPermission();
+    // requestLocationPermission();
   }, []);
 
   const requestLocationPermission = async () => {
@@ -24,7 +24,7 @@ const App = () => {
         }
       );
 
-      const backgroundLocationGranted = await PermissionsAndroid.request(
+      await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
         {
           title: 'Background Location Permission',
@@ -36,8 +36,7 @@ const App = () => {
       );
 
       if (
-        fineLocationGranted === PermissionsAndroid.RESULTS.GRANTED &&
-        backgroundLocationGranted === PermissionsAndroid.RESULTS.GRANTED
+        fineLocationGranted === PermissionsAndroid.RESULTS.GRANTED
       ) {
         console.log('Location permissions granted');
         updatePermissionStatus(true);
