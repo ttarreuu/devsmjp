@@ -1870,11 +1870,6 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@supersami/rn-foreground-service@^2.2.1":
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@supersami/rn-foreground-service/-/rn-foreground-service-2.2.1.tgz#0f80c2daacf96eb33016ac45f4f3e5549f5193e1"
-  integrity sha512-uqCzXv/MgcKbL2xc4zYwwo/NNatyjZX6KDyUXJoyXl8jQYjHno7zjDsIpbOEbLXZV7B/4NCVc7l8eoB8q7C7aA==
-
 "@types/babel__core@^7.1.14":
   version "7.20.5"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.20.5.tgz#3df15f27ba85319caa07ba08d0721889bb39c017"
@@ -3413,6 +3408,11 @@ event-target-shim@^5.0.0, event-target-shim@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/event-target-shim/-/event-target-shim-5.0.1.tgz#5d4d3ebdf9583d63a5333ce2deb7480ab2b05789"
   integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
+
+eventemitter3@^4.0.7:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
+  integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
 execa@^5.0.0, execa@^5.1.1:
   version "5.1.1"
@@ -5659,6 +5659,13 @@ react-is@^17.0.1:
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
+
+react-native-background-actions@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-background-actions/-/react-native-background-actions-4.0.1.tgz#51fab1df75fb69428c059929284d2ab3b5ff673b"
+  integrity sha512-LADhnb4ag1oH5Lotq0j8K9e2cFmrafFyg2PCME88VkTjqDUgNcJonkNdMCTHN0N3fh+hwAA7nDR4Cxkj9Q8eCw==
+  dependencies:
+    eventemitter3 "^4.0.7"
 
 react-native-geolocation-service@^5.3.1:
   version "5.3.1"
