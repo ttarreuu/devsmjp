@@ -34,6 +34,7 @@ const AttendanceScreen = () => {
       if (newStatus) {
         await startBackgroundJob();
         await AsyncStorage.setItem('backgroundTaskStatus', 'true'); // Simpan status "start"
+        
       } else {
         await stopBackgroundJob();
         await AsyncStorage.setItem('backgroundTaskStatus', 'false'); // Simpan status "stop"
