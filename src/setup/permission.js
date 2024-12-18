@@ -5,6 +5,7 @@ async function requestMultiplePermissions() {
         const permissions = [
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+            PermissionsAndroid.PERMISSIONS.CAMERA, // Add camera permission
         ];
 
         // Add ACCESS_BACKGROUND_LOCATION only for Android 10 and above
@@ -23,6 +24,7 @@ async function requestMultiplePermissions() {
         // Check each permission
         const locationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
         const coarseLocationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
+        const cameraGranted = granted[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED;
 
         let backgroundLocationGranted = true; // Default true for versions below 29
         if (Platform.Version >= 29) {
@@ -34,7 +36,7 @@ async function requestMultiplePermissions() {
             notificationsGranted = granted[PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS] === PermissionsAndroid.RESULTS.GRANTED;
         }
 
-        if (locationGranted && coarseLocationGranted && backgroundLocationGranted && notificationsGranted) {
+        if (locationGranted && coarseLocationGranted && cameraGranted && backgroundLocationGranted && notificationsGranted) {
             console.log('All requested permissions granted');
             return true;
         } else {
