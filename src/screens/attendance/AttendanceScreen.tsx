@@ -1,116 +1,98 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { startBackgroundJob, stopBackgroundJob } from '../../utils/background_task';
-import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-camera";
+import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
+
 
 const AttendanceScreen = () => {
-  const [playing, setPlaying] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
+
+  const [isAttendance, setIsAttendance] = useState(false);
   const [imageData, setImageData] = useState('');
+  const [isDisable, setIsDisable] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const devices = useCameraDevices();
-  const device = useCameraDevice('back'); // Get the back camera device
-  const camera = useRef<Camera>(null);
 
-  useEffect(() => {
-    const getBackgroundStatus = async () => {
-      try {
-        const status = await AsyncStorage.getItem('backgroundTaskStatus');
-        if (status !== null) {
-          setPlaying(status === 'true');
-        }
-      } catch (error) {
-        console.error('Error retrieving background task status:', error);
-      }
-    };
-
+  useEffect  (() => {
     getBackgroundStatus();
     checkPermission();
   }, []);
+    
+  const getBackgroundStatus = async () => {
+    const status = await AsyncStorage.getItem('backgroundTaskStatus');
+    if(status !== null) {
+      setIsAttendance(true);
+    }
+  };
 
   const checkPermission = async () => {
-    const cameraPermission = await Camera.requestCameraPermission();
-    if (cameraPermission !== 'granted') {
-      console.error('Camera permission is not granted!');
-    } else {
-      console.log('Camera permission granted');
-    }
+    const newCameraPermission = await Camera.requestCameraPermission;
+    console.log(newCameraPermission);
   };
 
-  const toggleBackground = async () => {
-    // const newStatus = !playing;
+  const toggleAttendance = () => {
     try {
-      if (!playing) {
-        setCameraActive(true);
-        // await startBackgroundJob();
-        // await AsyncStorage.setItem('backgroundTaskStatus', 'true');
+      if (!isAttendance) {
+        attendanceBegin();
       } else {
-        await stopBackgroundJob();
-        await AsyncStorage.setItem('backgroundTaskStatus', 'false');
-        setCameraActive(false);
-        setPreviewVisible(false);
-        setConfirmVisible(false);
-        setPlaying(false);
+        attendanceEnd();
       }
-
-    } catch (error) {
-      console.error('Error toggling background task:', error);
+    } catch (err) {
+      console.log(err)
     }
   };
 
+  const attendanceBegin = () => {
+    setIsDisable(true);
+  };
+
+  const attendanceEnd = async () => {
+    setIsDisable(true);
+  };
+      
   const takePicture = async () => {
-    if (camera.current) {
+    if(camera.current) {
       const photo = await camera.current.takePhoto();
       setImageData(photo.path);
-      setCameraActive(false); // Deactivate the camera
-      setPreviewVisible(true); // Show photo preview
-      setConfirmVisible(false);
+      setPreviewVisible(true);
+    }
+  };
+      
+  const handleConfirm = async () => {
+    try {
+      setPreviewVisible(false);
+      setIsDisable(false);
+      if (isAttendance == true) {
+        await stopBackgroundJob();
+        await AsyncStorage.setItem('backgroundTaskStatus', 'false');
+        setIsAttendance(false)
+      } else {
+        await startBackgroundJob();
+        await AsyncStorage.setItem('backgroundTaskStatus', 'true');
+        setIsAttendance(true);
+      }
+    } catch (error) {
+      console.error('Error starting background task:', error);
     }
   };
 
-  const handleConfirm = async () => {
-    await startBackgroundJob();
-    await AsyncStorage.setItem('backgroundTaskStatus', 'true');
-    setCameraActive(false); // Hide camera after confirmation
-    setPreviewVisible(false);
-    setConfirmVisible(false); // Hide confirm button
-    setPlaying(true);
-  };
+  const devices = useCameraDevices();
+  const device = useCameraDevice('back');
+  const camera = useRef<Camera>(null)
 
-  // const startPhotoTaking = () => {
-  //   setCameraActive(true); // Activate the camera
-  //   setPhotoTakingMode(true); // Enter photo-taking mode
-  // };
-
-  if (cameraActive && device == null) {
-    return (
-      <View style={styles.body}>
-        <Text>Loading Camera...</Text>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+  if(isDisable && device == null) {      
+    return <ActivityIndicator/>
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      {!cameraActive && (
-        <TouchableOpacity style={styles.button} onPress={toggleBackground}>
+    <View style={{flex:1}}>
+      {!isDisable && (
+        <TouchableOpacity style={styles.button} onPress={toggleAttendance}>
           <Text style={styles.buttonText}>
-            {playing ? 'Stop Background Task' : 'Start Background Task'}
+            {isAttendance ? 'Stop Background Task' : 'Start Background Task'}
           </Text>
         </TouchableOpacity>
       )}
-
-      {cameraActive && device ? (
+      {!previewVisible && isDisable && device ? (
         <View style={{ flex: 1 }}>
           <Camera
             ref={camera}
