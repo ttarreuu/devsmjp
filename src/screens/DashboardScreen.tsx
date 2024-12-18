@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import { menuData } from '../data/menuData';
+import { menuData } from '../data/menu_data';
 
 export default function DashboardScreen({ navigation }) {
   const renderMenuItem = ({ item }) => (

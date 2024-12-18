@@ -11,7 +11,7 @@ import EmergencyScreen from '../screens/emergency/EmergencyScreen';
 import PatrolScreen from '../screens/patrol/PatrolScreen';
 import ScheduleScreen from '../screens/schedule/ScheduleScreen';
 
-import { getDefaultHeaderOptions } from '../screens/utils/Header'; 
+import { getDefaultHeaderOptions } from '../components/Header'; 
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();

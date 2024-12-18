@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { startBackgroundJob, stopBackgroundJob } from '../utils/backgroundTask';
+import { startBackgroundJob, stopBackgroundJob } from '../../utils/background_task';
 
 const AttendanceScreen = () => {
   const [playing, setPlaying] = useState(false);
