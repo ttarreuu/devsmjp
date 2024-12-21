@@ -25,8 +25,10 @@ const taskRandom = async (taskData: any) => {
   const startWatchingPosition = () => {
     watchId = Geolocation.watchPosition(
       (position) => {
+        const datetime = new Date();
+        const curr = datetime.toISOString();
         const { latitude, longitude, accuracy, altitude } = position.coords;
-        console.log('Updated Position:', { latitude, longitude, accuracy, altitude });
+        console.log('Updated Position:', { latitude, longitude, accuracy, altitude, curr });
       },
       (error) => {
         console.error('Error watching position:', error);
