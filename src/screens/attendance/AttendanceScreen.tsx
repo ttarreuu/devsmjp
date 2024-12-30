@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-camera";
 import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
+import React from "react";
 
 
 const AttendanceScreen = () => {
