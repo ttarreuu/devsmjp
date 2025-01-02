@@ -1,5 +1,11 @@
 import BackgroundJob from 'react-native-background-actions';
 import Geolocation from 'react-native-geolocation-service';
+import {
+  initDatabase,
+  insertLocalDB,
+  getLocalDB,
+  deleteLocalDB
+} from '../data/log_tracking';
 
 const options = {
   taskName: 'Geolocation Task',
@@ -39,6 +45,7 @@ const taskRandom = async (taskData: any) => {
         interval: 0,
       }
     );
+    
   };
 
   startWatchingPosition();
