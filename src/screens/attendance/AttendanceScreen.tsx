@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -6,17 +5,6 @@ import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-c
 import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
 import ImageResizer from "react-native-image-resizer";
 import RNFS from "react-native-fs";
-=======
-/* eslint-disable react-native/no-inline-styles */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
-import { startBackgroundJob, stopBackgroundJob } from '../../utils/background_task';
-import ImageResizer from 'react-native-image-resizer';
-import RNFS from 'react-native-fs';
-import React from 'react';
->>>>>>> caeb66e7bca5b91d85fa7ce11bbac0aaaa9df512
 
 
 const AttendanceScreen = () => {
