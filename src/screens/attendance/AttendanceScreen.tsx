@@ -3,12 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-camera";
 import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
-<<<<<<< HEAD
 import ImageResizer from "react-native-image-resizer";
 import RNFS from "react-native-fs";
-=======
-import React from "react";
->>>>>>> 50ef5a82b9f46a84f8fbbae7310766d0cf7d484b
 
 
 const AttendanceScreen = () => {
