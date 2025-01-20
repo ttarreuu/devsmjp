@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -5,6 +6,17 @@ import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-c
 import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
 import ImageResizer from "react-native-image-resizer";
 import RNFS from "react-native-fs";
+=======
+/* eslint-disable react-native/no-inline-styles */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
+import { startBackgroundJob, stopBackgroundJob } from '../../utils/background_task';
+import ImageResizer from 'react-native-image-resizer';
+import RNFS from 'react-native-fs';
+import React from 'react';
+>>>>>>> caeb66e7bca5b91d85fa7ce11bbac0aaaa9df512
 
 
 const AttendanceScreen = () => {
@@ -14,21 +26,21 @@ const AttendanceScreen = () => {
   const [cameraVisible, setCameraVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(Boolean);
- 
+
   const [startDateTime, setStartDateTime] = useState('');
   const [endDateTime, setEndDateTime] = useState('');
   const [startPicture, setStartPicture] = useState('');
   const [endPicture, setEndPicture] = useState('');
 
-  useEffect  (() => {
+  useEffect(() => {
     getBackgroundStatus();
     checkPermission();
   }, []);
-    
+
   const getBackgroundStatus = async () => {
     console.log(isAttendance);
     const status = await AsyncStorage.getItem('backgroundTaskStatus');
-    if(status == 'true') {
+    if(status === 'true') {
       setIsAttendance(true);
     } else {
       setIsAttendance(false);
@@ -50,28 +62,28 @@ const AttendanceScreen = () => {
         setEndDateTime(new Date().toISOString());
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
     setIsHide(true);
     setCameraVisible(true);
   };
-      
+
   const takePicture = async () => {
     if(camera.current) {
       const photo = await camera.current.takePhoto();
       setImageData(photo.path);
-      
+
       const compressedImage = await ImageResizer.createResizedImage(
         photo.path,
         800,
         600,
         'JPEG',
-        50,          
+        50,
         0
       );
-      
+
       const base64Image = await RNFS.readFile(compressedImage.uri, 'base64');
-      
+
       try {
         if (!isAttendance) {
           setStartPicture(base64Image);
@@ -79,7 +91,7 @@ const AttendanceScreen = () => {
           setEndPicture(base64Image);
         }
       } catch (err) {
-        console.log(err)
+        console.log(err);
       }
 
       setCameraVisible(false);
@@ -88,21 +100,21 @@ const AttendanceScreen = () => {
       // convert to base 64 format
     }
   };
-      
+
   const handleConfirm = async () => {
     try {
       setIsHide(false);
       setPreviewVisible(false);
 
-      
+
       // const startDateTime = AsyncStorage.getItem('startDT');
       // const endDateTime = AsyncStorage.getItem('endDT');
-      
-      
+
+
       // const startPicture = AsyncStorage.getItem('startPic');
       // const endPicture = AsyncStorage.getItem('endPic');
-      
-      
+
+
       const attendanceID = await AsyncStorage.getItem('attendanceID');
       const endpoint = isAttendance
         ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
@@ -123,26 +135,27 @@ const AttendanceScreen = () => {
           await AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
           await AsyncStorage.setItem('backgroundTaskStatus', 'true');
           setIsAttendance(true);
-          startBackgroundJob(); 
+          startBackgroundJob();
         } else {
-          await stopBackgroundJob(); 
+          await stopBackgroundJob();
           await AsyncStorage.setItem('backgroundTaskStatus', 'false');
           await AsyncStorage.removeItem('attendanceID');
           setIsAttendance(false);
         }
-      
+
     } catch (error) {
       console.error('Error starting background task:', error);
     }
     console.log(isAttendance);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const devices = useCameraDevices();
   const device = useCameraDevice('back');
-  const camera = useRef<Camera>(null)
+  const camera = useRef<Camera>(null);
 
-  if(device == null) {      
-    return <ActivityIndicator/>
+  if(device == null) {
+    return <ActivityIndicator/>;
   }
 
   return (
@@ -154,7 +167,7 @@ const AttendanceScreen = () => {
           </Text>
         </TouchableOpacity>
       )}
-      {isHide && cameraVisible &&!previewVisible && device ? (
+      {isHide && cameraVisible && !previewVisible && device ? (
         <View style={{ flex: 1 }}>
           <Camera
             ref={camera}
@@ -235,7 +248,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 50,
     alignSelf: 'center',
-  }
+  },
 });
 
 export default AttendanceScreen;
