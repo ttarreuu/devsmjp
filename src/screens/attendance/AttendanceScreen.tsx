@@ -1,242 +1,107 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Camera, useCameraDevice, useCameraDevices } from "react-native-vision-camera";
-import { startBackgroundJob, stopBackgroundJob } from "../../utils/background_task";
-import ImageResizer from "react-native-image-resizer";
-import RNFS from "react-native-fs";
-
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, FlatList } from 'react-native';
+import Geolocation from 'react-native-geolocation-service'; 
+import { saveLog, getAllLogs, deleteAllLogs } from '../../data/log_tracking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AttendanceScreen = () => {
+  const [logs, setLogs] = useState([]);
+  const [trackingStatus, setTrackingStatus] = useState(false);
+  const [watchId, setWatchId] = useState(null);
 
-  const [imageData, setImageData] = useState('');
-  const [isHide, setIsHide] = useState(false);
-  const [cameraVisible, setCameraVisible] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [isAttendance, setIsAttendance] = useState(Boolean);
-
-  const [startDateTime, setStartDateTime] = useState('');
-  const [endDateTime, setEndDateTime] = useState('');
-  const [startPicture, setStartPicture] = useState('');
-  const [endPicture, setEndPicture] = useState('');
-
+  
+  
   useEffect(() => {
-    getBackgroundStatus();
-    checkPermission();
+    loadLogs();
+    readStatus();
   }, []);
 
-  const getBackgroundStatus = async () => {
-    console.log(isAttendance);
-    const status = await AsyncStorage.getItem('backgroundTaskStatus');
-    if(status === 'true') {
-      setIsAttendance(true);
-    } else {
-      setIsAttendance(false);
+  const readStatus = async () => {
+    const status = await AsyncStorage.getItem('status');
+    if(status == 'true') {
+      setTrackingStatus(true);
+    } else if(status == 'false') {
+      setTrackingStatus(false);
     }
-    console.log(isAttendance);
-  };
-
-  const checkPermission = () => {
-    const newCameraPermission = Camera.requestCameraPermission;
-    console.log(newCameraPermission);
-  };
-
-  const toggleAttendance = () => {
-    console.log(isAttendance);
-    try {
-      if (!isAttendance) {
-        setStartDateTime(new Date().toISOString());
-      } else {
-        setEndDateTime(new Date().toISOString());
-      }
-    } catch (err) {
-      console.log(err);
-    }
-    setIsHide(true);
-    setCameraVisible(true);
-  };
-
-  const takePicture = async () => {
-    if(camera.current) {
-      const photo = await camera.current.takePhoto();
-      setImageData(photo.path);
-
-      const compressedImage = await ImageResizer.createResizedImage(
-        photo.path,
-        800,
-        600,
-        'JPEG',
-        50,
-        0
-      );
-
-      const base64Image = await RNFS.readFile(compressedImage.uri, 'base64');
-
-      try {
-        if (!isAttendance) {
-          setStartPicture(base64Image);
-        } else {
-          setEndPicture(base64Image);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-
-      setCameraVisible(false);
-      setPreviewVisible(true);
-
-      // convert to base 64 format
-    }
-  };
-
-  const handleConfirm = async () => {
-    try {
-      setIsHide(false);
-      setPreviewVisible(false);
-
-
-      // const startDateTime = AsyncStorage.getItem('startDT');
-      // const endDateTime = AsyncStorage.getItem('endDT');
-
-
-      // const startPicture = AsyncStorage.getItem('startPic');
-      // const endPicture = AsyncStorage.getItem('endPic');
-
-
-      const attendanceID = await AsyncStorage.getItem('attendanceID');
-      const endpoint = isAttendance
-        ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
-        : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
-      const method = isAttendance ? 'PUT' : 'POST';
-      const body = isAttendance
-        ? { endDateTime, endPicture }
-        : { startDateTime, startPicture };
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-        if (!isAttendance) {
-          const data = await response.json();
-          await AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
-          await AsyncStorage.setItem('backgroundTaskStatus', 'true');
-          setIsAttendance(true);
-          startBackgroundJob();
-        } else {
-          await stopBackgroundJob();
-          await AsyncStorage.setItem('backgroundTaskStatus', 'false');
-          await AsyncStorage.removeItem('attendanceID');
-          setIsAttendance(false);
-        }
-
-    } catch (error) {
-      console.error('Error starting background task:', error);
-    }
-    console.log(isAttendance);
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const devices = useCameraDevices();
-  const device = useCameraDevice('back');
-  const camera = useRef<Camera>(null);
-
-  if(device == null) {
-    return <ActivityIndicator/>;
   }
 
+  const handleSaveLog = () => {
+    const num = Geolocation.watchPosition(
+      position => {
+        const currentDate = new Date();
+        const dateTime = currentDate.toUTCString();
+        const { latitude, longitude, altitude, speed, accuracy } = position.coords;
+        
+        if(accuracy <= 15) {
+          saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+        }
+        loadLogs(); 
+      },
+      error => {
+        console.error('Error getting location:', error);
+      },
+      { 
+        enableHighAccuracy: true,
+        interval: 10000, 
+        fastestInterval: 10000,
+        forceRequestLocation: true,
+        distanceFilter: 0
+      }
+    );
+    setWatchId(num);
+    setTrackingStatus(true);
+    AsyncStorage.setItem('status', 'true');
+  };
+
+  const loadLogs = () => {
+    const data = getAllLogs();
+    setLogs(data);
+  };
+
+  const handleDeleteAllLogs = () => {
+    deleteAllLogs();
+    loadLogs();
+  };
+
+    const toggleTracking = () => {
+    if (trackingStatus) {
+      stopWatching();
+      setTrackingStatus(false);
+      AsyncStorage.setItem('status', 'false');
+    } else {
+      handleSaveLog();
+      setTrackingStatus(true);
+      AsyncStorage.setItem('status', 'true');
+    }
+  };
+
+  const stopWatching = () => {
+    if (watchId !== null) {
+      Geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+    console.log(isAttendance);
+  };
+
+
   return (
-    <View style={{flex:1}}>
-      {!isHide && !cameraVisible && !previewVisible && (
-        <TouchableOpacity style={styles.button} onPress={toggleAttendance}>
-          <Text style={styles.buttonText}>
-            {isAttendance ? 'Stop Background Task' : 'Start Background Task'}
-          </Text>
-        </TouchableOpacity>
-      )}
-      {isHide && cameraVisible && !previewVisible && device ? (
-        <View style={{ flex: 1 }}>
-          <Camera
-            ref={camera}
-            style={StyleSheet.absoluteFill}
-            device={device}
-            isActive={true}
-            photo
-          />
-          <TouchableOpacity
-            style={styles.captureButton}
-            onPress={takePicture}
-          />
-        </View>
-      ) : (
-        <View style={styles.body}>
-          {previewVisible && imageData !== '' && (
-            <>
-              <Image
-                source={{ uri: 'file://' + imageData }}
-                style={styles.imagePreview}
-              />
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirm}
-              >
-                <Text style={styles.buttonText}>Confirm</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      )}
+    <View style={{ flex: 1, padding: 20 }}>
+      <Button title={trackingStatus ? "Stop Tracking" : "Start Tracking"} onPress={toggleTracking} />
+      <FlatList
+        data={logs}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={{ marginVertical: 10 }}>
+            <Text>ID: {item.id}</Text>
+            <Text>Latitude: {item.latitude}</Text>
+            <Text>Longitude: {item.longitude}</Text>
+            <Text>DateTime: {item.dateTime.toString()}</Text>
+          </View>
+        )}
+      />
+      <Button title="Delete All Logs" onPress={handleDeleteAllLogs} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  body: {
-    backgroundColor: 'white',
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    height: 50,
-    width: 200,
-    backgroundColor: 'blue',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  confirmButton: {
-    height: 50,
-    width: 200,
-    backgroundColor: 'green',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  imagePreview: {
-    width: '90%',
-    height: 200,
-    marginBottom: 20,
-  },
-  captureButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
-  },
-});
 
 export default AttendanceScreen;

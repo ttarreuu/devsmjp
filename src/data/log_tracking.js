@@ -1,71 +1,101 @@
-import SQLite from 'react-native-sqlite-storage';
+import Realm from 'realm';
 
-SQLite.Debug(true);
-SQLite.enablePromise(true);
-
-const database_name = 'Log.db';
-const database_version = '1.0';
-const database_displayname = 'Location Data';
-const database_size = 200000;
-
-let db;
-
-export const initDatabase = async() => {
-    try {
-        db = await SQLite.openDatabase(
-            database_name,
-            database_version,
-            database_displayname,
-            database_size
-        );
-
-        await db.executeSql(
-            `CREATE TABLE IF NOT EXISTS LogTracking (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                dateTime TEXT, 
-                latitude REAL, 
-                longitude REAL,
-                altitude REAL,
-                speed REAL,
-                accuracy REAL
-            );`
-        );
-        console.log("Database initialized successfully");
-    } catch (error) {
-    console.log("Error initializing database:", error);
-  }
+// Define the schema for log tracking
+const LogTrackingSchema = {
+  name: 'LogTracking',
+  primaryKey: 'id',
+  properties: {
+    id: 'int', // Auto-incrementing integer ID
+    dateTime: 'date', // DateTime of the log
+    latitude: 'double',
+    longitude: 'double',
+    altitude: 'double',
+    speed: 'double',
+    accuracy: 'double'
+  },
 };
 
-export const insertLocalDB = async (newData) => {
-  const { dateTime, latitude, longitude, altitude, speed, accuracy } = newData;
-  try {
-    await db.executeSql(
-      `INSERT INTO LogTracking (dateTime, latitude, longitude, altitude, speed, accuracy) VALUES (?, ?, ?, ?, ?, ?);`,
-      [dateTime, latitude, longitude, altitude, speed, accuracy ]
-    );
-  } catch (error) {
-    console.log('Error inserting location', error);
+// Create a Realm instance
+const realm = new Realm({ schema: [LogTrackingSchema] });
+
+// Get the next ID for auto-increment
+const getNextId = () => {
+  const logs = realm.objects('LogTracking');
+  if (logs.length > 0) {
+    return logs.max('id') + 1; // Get the max ID and increment by 1
   }
+  return 1; // Start with 1 if no records exist
 };
 
-export const getLocalDB = async () => {
+// Save a new log to the database
+export const saveLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
   try {
-    let results = await db.executeSql(`SELECT * FROM LogTracking;`);
-    let data = [];
-    results[0].rows.raw().forEach((row) => {
-      data.push(row);
+    const id = getNextId(); // Get the next auto-incremented ID
+    realm.write(() => {
+      realm.create('LogTracking', {
+        id,
+        dateTime,
+        longitude,
+        latitude,
+        altitude,
+        speed,
+        accuracy
+      });
     });
-    return data;
+    console.log('Log saved:', { id, latitude, longitude, dateTime });
   } catch (error) {
-    console.log('Error fetching data', error);
+    console.error('Error saving log:', error);
+  }
+};
+
+// Fetch all logs from the database
+export const getAllLogs = () => {
+  try {
+    const logs = realm.objects('LogTracking');
+    return logs.map(log => ({
+      id: log.id,
+      dateTime: log.dateTime,
+      latitude: log.latitude,
+      longitude: log.longitude,
+      altitude: log.altitude,
+      speed: log.speed,
+      accuracy: log.accuracy,
+    }));
+  } catch (error) {
+    console.error('Error fetching logs:', error);
     return [];
   }
 };
 
-export const deleteLocalDB = async (id) => {
+// Delete a specific log by ID
+export const deleteLogById = (id) => {
   try {
-    await db.executeSql(`DELETE FROM LogTracking WHERE id = ?;`, [id]);
+    realm.write(() => {
+      const log = realm.objectForPrimaryKey('LogTracking', id);
+      if (log) {
+        realm.delete(log);
+        console.log('Log deleted:', id);
+      } else {
+        console.log('Log not found:', id);
+      }
+    });
   } catch (error) {
-    console.log('Error deleting data', error);
+    console.error('Error deleting log:', error);
   }
 };
+
+// Delete all logs from the database
+export const deleteAllLogs = () => {
+  try {
+    realm.write(() => {
+      const allLogs = realm.objects('LogTracking');
+      realm.delete(allLogs); // Deletes all logs
+    });
+    console.log('All logs deleted.');
+  } catch (error) {
+    console.error('Error deleting all logs:', error);
+  }
+};
+
+// Realm instance for advanced use cases
+export const getRealmInstance = () => realm;
