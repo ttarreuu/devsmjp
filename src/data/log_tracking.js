@@ -16,7 +16,11 @@ const LogTrackingSchema = {
 };
 
 // Create a Realm instance
-const realm = new Realm({ schema: [LogTrackingSchema] });
+const realm = new Realm({ 
+  schema: [LogTrackingSchema],
+  path: 'log_tracking.realm' // Unique path for the main database
+});
+
 
 // Get the next ID for auto-increment
 const getNextId = () => {

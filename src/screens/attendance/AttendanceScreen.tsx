@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Button, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Geolocation from 'react-native-geolocation-service'; 
-import { saveLog, getAllLogs, deleteAllLogs } from '../../data/log_tracking';
+import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
 import ImageResizer from 'react-native-image-resizer';
 import RNFS from "react-native-fs";
+import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
 
 const AttendanceScreen = () => {
   const [logs, setLogs] = useState([]);
@@ -43,6 +44,7 @@ const AttendanceScreen = () => {
 
             // Send data to the API
             await sendDataToApi(newData);
+            await deleteLogById(log.id);
           }
         }
 
@@ -179,32 +181,50 @@ const AttendanceScreen = () => {
     console.log(newCameraPermission);
   };
 
-  const handleSaveLog = () => {
-    const num = Geolocation.watchPosition(
-      position => {
-        const currentDate = new Date();
-        const dateTime = currentDate.toUTCString();
-        const { latitude, longitude, altitude, speed, accuracy } = position.coords;
-        
-        if(accuracy <= 15) {
-          saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
-        }
-        loadLogs(); 
-      },
-      error => {
-        console.error('Error getting location:', error);
-      },
-      { 
-        enableHighAccuracy: true,
-        interval: 10000, 
-        fastestInterval: 10000,
-        forceRequestLocation: true,
-        distanceFilter: 0
+  const handleSaveLog = async () => {
+    // if(isAttendance) {
+      try {
+        // Get the saved num from AsyncStorage, or use 0 if it's null or undefined
+        let num = await AsyncStorage.getItem('num');
+        num = num !== null ? parseInt(num) : 0; // Parse to integer or set to 0 if null
+  
+        // Now use num as your tracking value, and update it as needed in your app logic
+        const watchId = Geolocation.watchPosition(
+          position => {
+            const currentDate = new Date();
+            const dateTime = currentDate.toUTCString();
+            const { latitude, longitude, altitude, speed, accuracy } = position.coords;
+  
+            if (accuracy <= 15) {
+              saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+              saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+            }
+            
+            loadLogs(); 
+            
+            // After processing each position, you can increment num if needed
+            num += 1;
+  
+            // Save the updated num back to AsyncStorage
+            AsyncStorage.setItem('num', num.toString()); // Store the updated num
+          },
+          error => {
+            console.error('Error getting location:', error);
+          },
+          { 
+            enableHighAccuracy: true,
+            interval: 10000, 
+            fastestInterval: 10000,
+            forceRequestLocation: true,
+            distanceFilter: 0
+          }
+        );
+  
+        setWatchId(watchId); // Use the watchId in your state
+      } catch (error) {
+        console.error('Error with AsyncStorage or geolocation:', error);
       }
-    );
-    setWatchId(num);
-    setIsAttendance(true);
-    AsyncStorage.setItem('status', 'true');
+    // }
   };
 
   const loadLogs = () => {
@@ -264,13 +284,6 @@ const AttendanceScreen = () => {
       setIsHide(false);
       setPreviewVisible(false);
 
-      // const startDateTime = AsyncStorage.getItem('startDT');
-      // const endDateTime = AsyncStorage.getItem('endDT');
-
-
-      // const startPicture = AsyncStorage.getItem('startPic');
-      // const endPicture = AsyncStorage.getItem('endPic');
-
       const attendanceID = await AsyncStorage.getItem('attendanceID');
       const endpoint = isAttendance
         ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
@@ -286,38 +299,40 @@ const AttendanceScreen = () => {
         body: JSON.stringify(body),
       });
 
-
-      if (!isAttendance) {
-        const data = await response.json();
-        AsyncStorage.setItem('attendanceID', data.attendanceID.toString());  
-        handleSaveLog();
-        setIsAttendance(true);
-        AsyncStorage.setItem('startPic', startPicture);
-        AsyncStorage.setItem('startDate', startDateTime);
-        AsyncStorage.setItem('status', 'true');
-
-      } else {
-        stopWatching();
-        setIsAttendance(false);
-        AsyncStorage.setItem('status', 'false');
-        AsyncStorage.removeItem('attendanceID');
-        AsyncStorage.removeItem('logID');
+      if (response.ok) {
+        if (!isAttendance) {
+          const data = await response.json();
+          AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
+          setIsAttendance(true);
+          handleSaveLog(); 
+          AsyncStorage.setItem('startPic', startPicture);
+          AsyncStorage.setItem('startDate', startDateTime);
+          AsyncStorage.setItem('status', 'true');
+        } else {
+          setIsAttendance(false);
+          AsyncStorage.setItem('status', 'false');
+          AsyncStorage.removeItem('attendanceID');
+          AsyncStorage.removeItem('logID');
+          deleteAllTempLogs();
+          deleteAllLogs();
+          stopWatching(); // Make sure to stop it properly when attendance is finished
+        }
       }
     } catch (error) {
       console.error('Error starting background task:', error);
     }
-
-    console.log(isAttendance);
-  }
+  };
 
   const stopWatching = () => {
     if (watchId !== null) {
-      Geolocation.clearWatch(watchId);
-      setWatchId(null);
-      setIsAttendance(false);
-      AsyncStorage.setItem('status', 'false');
+      Geolocation.clearWatch(watchId);  // Clear the watch
+      setWatchId(null);  // Reset watchId to null
+      AsyncStorage.removeItem('num'); // Remove the num tracking
+      setIsAttendance(false); // Set isAttendance to false
+      AsyncStorage.setItem('status', 'false'); // Update AsyncStorage status
     }
   };
+
 
   const devices = useCameraDevices();
   const device = useCameraDevice('back');
