@@ -1,12 +1,11 @@
 import Realm from 'realm';
 
-// Define the schema for log tracking temp
 const LogTrackingTempSchema = {
   name: 'LogTrackingTemp',
   primaryKey: 'id',
   properties: {
-    id: 'int', // Auto-incrementing integer ID
-    dateTime: 'date', // DateTime of the log
+    id: 'int', 
+    dateTime: 'date', 
     latitude: 'double',
     longitude: 'double',
     altitude: 'double',
@@ -15,26 +14,23 @@ const LogTrackingTempSchema = {
   },
 };
 
-// Create a Realm instance
 const realm = new Realm({ 
   schema: [LogTrackingTempSchema],
-  path: 'log_tracking_temp.realm' // Unique path for the temporary database
+  path: 'log_tracking_temp.realm' 
 });
 
 
-// Get the next ID for auto-increment
 const getNextTempId = () => {
   const logs = realm.objects('LogTrackingTemp');
   if (logs.length > 0) {
-    return logs.max('id') + 1; // Get the max ID and increment by 1
+    return logs.max('id') + 1; 
   }
-  return 1; // Start with 1 if no records exist
+  return 1; 
 };
 
-// Save a new log to the temporary database
 export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
   try {
-    const id = getNextTempId(); // Get the next auto-incremented ID
+    const id = getNextTempId(); 
     realm.write(() => {
       realm.create('LogTrackingTemp', {
         id,
@@ -52,7 +48,6 @@ export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accu
   }
 };
 
-// Fetch all logs from the temporary database
 export const getAllTempLogs = () => {
   try {
     const logs = realm.objects('LogTrackingTemp');
@@ -71,7 +66,6 @@ export const getAllTempLogs = () => {
   }
 };
 
-// Delete a specific temporary log by ID
 export const deleteTempLogById = (id) => {
   try {
     realm.write(() => {
@@ -88,12 +82,11 @@ export const deleteTempLogById = (id) => {
   }
 };
 
-// Delete all logs from the temporary database
 export const deleteAllTempLogs = () => {
   try {
     realm.write(() => {
       const allLogs = realm.objects('LogTrackingTemp');
-      realm.delete(allLogs); // Deletes all logs
+      realm.delete(allLogs);
     });
     console.log('All temporary logs deleted.');
   } catch (error) {
@@ -101,5 +94,4 @@ export const deleteAllTempLogs = () => {
   }
 };
 
-// Realm instance for advanced use cases
 export const getTempRealmInstance = () => realm;
