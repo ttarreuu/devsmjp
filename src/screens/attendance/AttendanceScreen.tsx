@@ -28,27 +28,24 @@ const AttendanceScreen = () => {
 
     const fetchDataFromLocalDb = async () => {
       try {
-        // Fetch data from the local database (log_tracking)
-        const log_data = await getAllLogs(); // Replace this with your local database query logic
+        const log_data = await getAllLogs(); 
 
         if (log_data && log_data.length > 0) {
           for (const log of log_data) {
             const newData = {
-              dateTime: log.dateTime, // Replace with actual field name from local DB
-              latitude: log.latitude, // Replace with actual field name
-              longitude: log.longitude, // Replace with actual field name
-              altitude: log.altitude, // Replace with actual field name
-              speed: log.speed, // Replace with actual field name
-              accuracy: log.accuracy, // Replace with actual field name
+              dateTime: log.dateTime, 
+              latitude: log.latitude, 
+              longitude: log.longitude, 
+              altitude: log.altitude, 
+              speed: log.speed, 
+              accuracy: log.accuracy, 
             };
 
-            // Send data to the API
             await sendDataToApi(newData);
             await deleteLogById(log.id);
           }
         }
 
-        // Fetch logs from log_tracking.js for UI updates
         loadLogs();
       } catch (error) {
         console.error("Error fetching data from local database:", error);
@@ -56,14 +53,12 @@ const AttendanceScreen = () => {
     };
 
     if (isAttendance) {
-      // Start fetching data every 1 minute when attendance is active
       intervalId = setInterval(() => {
         fetchDataFromLocalDb();
-      }, 60000); // 60000ms = 1 minute
+      }, 60000); 
     }
 
     return () => {
-      // Clear the interval when attendance stops or component unmounts
       if (intervalId) {
         clearInterval(intervalId);
       }
@@ -79,7 +74,6 @@ const AttendanceScreen = () => {
     accuracy: number;
   }) => {
     try {
-      // Retrieve attendanceID from AsyncStorage
       const AttendanceID = await AsyncStorage.getItem('attendanceID');
       if (!AttendanceID) {
         console.error('AttendanceID not found in AsyncStorage');
@@ -91,10 +85,8 @@ const AttendanceScreen = () => {
         console.log('id not found in AsyncStorage');
       }
 
-      // Construct the API URL using the attendanceID
       const apiURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${AttendanceID}/LogTracking`;
 
-      // Try to fetch existing data for this attendanceID
       const response = await fetch(apiURL + '/' + logID, {
         method: 'GET',
       });
@@ -102,14 +94,12 @@ const AttendanceScreen = () => {
       let existingData;
 
       if (!response.ok) {
-        // If the data does not exist, create a new record with the given logTracking data
         existingData = {
           logTrackingID: logID,
           attendanceID: AttendanceID,
           logTracking: [newData],
         };
 
-        // Post new data to the API
         const postResponse = await fetch(apiURL, {
           method: 'POST',
           headers: {
@@ -122,7 +112,6 @@ const AttendanceScreen = () => {
           const createdData = await postResponse.json(); // Parse the response body
           console.log('New data created successfully:', createdData);
 
-          // Get the logTrackingID from the response
           const { logTrackingID } = createdData;
           console.log('Generated logTrackingID:', logTrackingID);
           AsyncStorage.setItem('id', logTrackingID);
@@ -133,18 +122,14 @@ const AttendanceScreen = () => {
         return;
       }
 
-      // Parse the existing data
       existingData = await response.json();
 
-      // Ensure logTracking is an array
       if (!Array.isArray(existingData.logTracking)) {
         existingData.logTracking = [];
       }
 
-      // Add the new log to the beginning of the array
       existingData.logTracking.unshift(newData);
 
-      // Update the existing data using PUT
       await fetch(apiURL + '/' + logID, {
         method: 'PUT',
         headers: {
@@ -167,13 +152,11 @@ const AttendanceScreen = () => {
 
   const readStatus = async () => {
     const status = await AsyncStorage.getItem('status');
-    // console.log(status);
     if(status == 'true') {
       setIsAttendance(true);
     } else if(status == 'false') {
       setIsAttendance(false);
     }
-    // console.log(status);
   }
 
   const checkPermission = () => {
@@ -182,49 +165,44 @@ const AttendanceScreen = () => {
   };
 
   const handleSaveLog = async () => {
-    // if(isAttendance) {
-      try {
-        // Get the saved num from AsyncStorage, or use 0 if it's null or undefined
-        let num = await AsyncStorage.getItem('num');
-        num = num !== null ? parseInt(num) : 0; // Parse to integer or set to 0 if null
+    try {
+      let num = await AsyncStorage.getItem('num');
+      num = num !== null ? parseInt(num) : 0; 
   
-        // Now use num as your tracking value, and update it as needed in your app logic
-        const watchId = Geolocation.watchPosition(
-          position => {
-            const currentDate = new Date();
-            const dateTime = currentDate.toUTCString();
-            const { latitude, longitude, altitude, speed, accuracy } = position.coords;
+      const watchId = Geolocation.watchPosition(
+        position => {
+          const currentDate = new Date();
+          const dateTime = currentDate.toUTCString();
+          const { latitude, longitude, altitude, speed, accuracy } = position.coords;
   
-            if (accuracy <= 15) {
-              saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
-              saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
-            }
-            
-            loadLogs(); 
-            
-            // After processing each position, you can increment num if needed
-            num += 1;
-  
-            // Save the updated num back to AsyncStorage
-            AsyncStorage.setItem('num', num.toString()); // Store the updated num
-          },
-          error => {
-            console.error('Error getting location:', error);
-          },
-          { 
-            enableHighAccuracy: true,
-            interval: 10000, 
-            fastestInterval: 10000,
-            forceRequestLocation: true,
-            distanceFilter: 0
+          if (accuracy <= 15) {
+            saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+            saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
           }
-        );
+            
+          loadLogs(); 
+            
+          num += 1;
   
-        setWatchId(watchId); // Use the watchId in your state
-      } catch (error) {
-        console.error('Error with AsyncStorage or geolocation:', error);
-      }
-    // }
+          AsyncStorage.setItem('num', num.toString()); 
+        },
+        error => {
+          console.error('Error getting location:', error);
+        },
+        { 
+          enableHighAccuracy: true,
+          interval: 10000, 
+          fastestInterval: 10000,
+          forceRequestLocation: true,
+          distanceFilter: 0
+        }
+      );
+      
+      setWatchId(watchId); 
+      
+    } catch (error) {
+      console.error('Error with AsyncStorage or geolocation:', error);
+    }
   };
 
   const loadLogs = () => {
@@ -315,7 +293,7 @@ const AttendanceScreen = () => {
           AsyncStorage.removeItem('logID');
           deleteAllTempLogs();
           deleteAllLogs();
-          stopWatching(); // Make sure to stop it properly when attendance is finished
+          stopWatching(); 
         }
       }
     } catch (error) {
@@ -325,11 +303,11 @@ const AttendanceScreen = () => {
 
   const stopWatching = () => {
     if (watchId !== null) {
-      Geolocation.clearWatch(watchId);  // Clear the watch
-      setWatchId(null);  // Reset watchId to null
-      AsyncStorage.removeItem('num'); // Remove the num tracking
-      setIsAttendance(false); // Set isAttendance to false
-      AsyncStorage.setItem('status', 'false'); // Update AsyncStorage status
+      Geolocation.clearWatch(watchId);  
+      setWatchId(null);  
+      AsyncStorage.removeItem('num'); 
+      setIsAttendance(false); 
+      AsyncStorage.setItem('status', 'false'); 
     }
   };
 
