@@ -2,26 +2,23 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
-import { getAllTempLogs } from "../../data/log_tracking_temp"; // Update the path
+import { getAllTempLogs } from "../../data/log_tracking_temp"; 
 
 Mapbox.setAccessToken('pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA');
 
 const PatrolScreen = () => {
   const [logData, setLogData] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [mapLoaded, setMapLoaded] = useState(false); // Control when to load the map
+  const [mapLoaded, setMapLoaded] = useState(false); 
 
   useEffect(() => {
-    // Simulate Mapbox initialization delay
     const timeout = setTimeout(() => {
       setMapLoaded(true);
-    }, 1000); // Delay MapView rendering for 1 second
+    }, 1000); 
 
-    // Fetch logs from Realm
     const logs = getAllTempLogs();
     setLogData(logs);
 
-    // Start watching the user's location in real time
     const watchId = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -42,7 +39,6 @@ const PatrolScreen = () => {
     };
   }, []);
 
-  // Convert logs to GeoJSON for LineLayer
   const getGeoJSONLine = () => ({
     type: "Feature",
     geometry: {

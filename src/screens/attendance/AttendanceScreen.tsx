@@ -126,8 +126,8 @@ const AttendanceScreen = () => {
           AsyncStorage.removeItem('attendanceID');
           AsyncStorage.removeItem('logID');
           
-          deleteAllTempLogs();
-          deleteAllLogs();
+          // deleteAllTempLogs();
+          // deleteAllLogs();
           
           // setIsAttendance(false);
           // AsyncStorage.setItem('status', 'false');
@@ -290,6 +290,9 @@ const AttendanceScreen = () => {
   };
   
   const stopWatching = () => {
+    handleDeleteAllLogs();
+    deleteAllTempLogs();
+    
     Geolocation.stopObserving(); 
     if (intervalRef.current) {
       clearInterval(intervalRef.current); 
@@ -299,8 +302,6 @@ const AttendanceScreen = () => {
     setWatchId(null);
     setIsAttendance(false);
     AsyncStorage.setItem('status', 'false');
-    handleDeleteAllLogs();
-    deleteAllTempLogs();
   };
   
   const handleDeleteAllLogs = () => {
