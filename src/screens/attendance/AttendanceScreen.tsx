@@ -11,60 +11,205 @@ import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
 const AttendanceScreen = () => {
   const [logs, setLogs] = useState([]);
   const [watchId, setWatchId] = useState(null);
-
+  
   const [imageData, setImageData] = useState('');
   const [isHide, setIsHide] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(Boolean);
-
+  
   const [startDateTime, setStartDateTime] = useState('');
   const [endDateTime, setEndDateTime] = useState('');
   const [startPicture, setStartPicture] = useState('');
   const [endPicture, setEndPicture] = useState('');
 
+  const intervalRef = useRef<NodeJS.Timer | null>(null);
+  
   useEffect(() => {
-    let intervalId = null;
-
-    const fetchDataFromLocalDb = async () => {
-      try {
-        const log_data = await getAllLogs(); 
-
-        if (log_data && log_data.length > 0) {
-          for (const log of log_data) {
-            const newData = {
-              dateTime: log.dateTime, 
-              latitude: log.latitude, 
-              longitude: log.longitude, 
-              altitude: log.altitude, 
-              speed: log.speed, 
-              accuracy: log.accuracy, 
-            };
-
-            await sendDataToApi(newData);
-            await deleteLogById(log.id);
-          }
-        }
-
-        loadLogs();
-      } catch (error) {
-        console.error("Error fetching data from local database:", error);
-      }
-    };
-
-    if (isAttendance) {
-      intervalId = setInterval(() => {
-        fetchDataFromLocalDb();
-      }, 60000); 
+    loadLogs();
+    readStatus();
+    checkPermission();
+  }, []);
+  
+  const loadLogs = () => {
+    const data = getAllLogs();
+    setLogs(data);
+  };
+  
+  const readStatus = async () => {
+    const status = await AsyncStorage.getItem('status');
+    if(status == 'true') {
+      setIsAttendance(true);
+    } else if(status == 'false') {
+      setIsAttendance(false);
     }
+  };
+  
+  const checkPermission = () => {
+    const newCameraPermission = Camera.requestCameraPermission;
+    console.log(newCameraPermission);
+  };
+  
+  const toggleTracking = () => {
+    if (isAttendance) {
+      setEndDateTime(new Date().toISOString());
+    } else {
+      setStartDateTime(new Date().toISOString());
+    }
+    setIsHide(true);
+    setCameraVisible(true);
+  };
+  
+  const takePicture = async () => {
+    if(camera.current) {
+      const photo = await camera.current.takePhoto();
+      setImageData(photo.path);
 
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      const compressedImage = await ImageResizer.createResizedImage(
+        photo.path,
+        800,
+        600,
+        'JPEG',
+        50,
+        0
+      );
+
+      const base64Image = await RNFS.readFile(compressedImage.uri, 'base64');
+
+      try {
+        if (!isAttendance) {
+          setStartPicture(base64Image);
+        } else {
+          setEndPicture(base64Image);
+        }
+      } catch (err) {
+        console.log(err);
       }
-    };
-  }, [isAttendance]);
 
+      setCameraVisible(false);
+      setPreviewVisible(true);
+      
+    }
+  };
+  
+  const handleConfirm = async () => {
+    try {
+      
+      const attendanceID = await AsyncStorage.getItem('attendanceID');
+      const endpoint = isAttendance
+      ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
+      : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
+      const method = isAttendance ? 'PUT' : 'POST';
+      const body = isAttendance
+        ? { endDateTime, endPicture }
+        : { startDateTime, startPicture };
+
+        const response = await fetch(endpoint, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        if (!isAttendance) {
+          const data = await response.json();
+          AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
+
+          // setIsAttendance(true);
+          // AsyncStorage.setItem('status', 'true');
+
+          startWatching();
+          
+        } else {
+          stopWatching(); 
+
+          AsyncStorage.removeItem('attendanceID');
+          AsyncStorage.removeItem('logID');
+          
+          deleteAllTempLogs();
+          deleteAllLogs();
+          
+          // setIsAttendance(false);
+          // AsyncStorage.setItem('status', 'false');
+          
+        }
+      }
+
+      setIsHide(false);
+      setPreviewVisible(false);
+
+    } catch (error) {
+      console.error('Error starting background task:', error);
+    }
+  };
+
+  const startWatching = async () => {
+
+    setIsAttendance(true);
+    AsyncStorage.setItem('status', 'true');
+
+    try {
+      
+      Geolocation.watchPosition(
+        position => {
+          const currentDate = new Date();
+          const dateTime = currentDate.toUTCString();
+          const { latitude, longitude, altitude, speed, accuracy } = position.coords;
+  
+          if (accuracy <= 15) {
+            saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+            saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
+          }
+            
+          loadLogs(); 
+           
+        },
+        error => {
+          console.error('Error getting location:', error);
+        },
+        { 
+          enableHighAccuracy: true,
+          interval: 10000, 
+          fastestInterval: 10000,
+          forceRequestLocation: true,
+          distanceFilter: 0
+        }
+      );
+
+      intervalRef.current = setInterval(() => {
+        pushLogsToApi();
+      }, 60000);
+      
+    } catch (error) {
+      console.error('Error with AsyncStorage or geolocation:', error);
+    }
+  };
+
+  const pushLogsToApi = async () => {
+    try {
+      const logData = await getAllLogs();
+      if (logData && logData.length > 0) {
+        for (const log of logData) {
+          const newData = {
+            dateTime: log.dateTime,
+            latitude: log.latitude,
+            longitude: log.longitude,
+            altitude: log.altitude,
+            speed: log.speed,
+            accuracy: log.accuracy,
+          };
+
+          await sendDataToApi(newData);
+          await deleteLogById(log.id);
+
+        }
+        loadLogs(); 
+      }
+    } catch (error) {
+      console.error('Error pushing logs to API:', error);
+    }
+  };
+  
   const sendDataToApi = async (newData: {
     dateTime: string;
     latitude: number;
@@ -109,7 +254,7 @@ const AttendanceScreen = () => {
         });
 
         if (postResponse.ok) {
-          const createdData = await postResponse.json(); // Parse the response body
+          const createdData = await postResponse.json(); 
           console.log('New data created successfully:', createdData);
 
           const { logTrackingID } = createdData;
@@ -137,180 +282,31 @@ const AttendanceScreen = () => {
         },
         body: JSON.stringify(existingData),
       });
-
+      
       console.log('Data updated successfully');
     } catch (error) {
       console.error('Error sending data to API:', error);
     }
   };
   
-  useEffect(() => {
-    loadLogs();
-    readStatus();
-    checkPermission();
-  }, []);
-
-  const readStatus = async () => {
-    const status = await AsyncStorage.getItem('status');
-    if(status == 'true') {
-      setIsAttendance(true);
-    } else if(status == 'false') {
-      setIsAttendance(false);
+  const stopWatching = () => {
+    Geolocation.stopObserving(); 
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current); 
+      intervalRef.current = null;
     }
-  }
 
-  const checkPermission = () => {
-    const newCameraPermission = Camera.requestCameraPermission;
-    console.log(newCameraPermission);
+    setWatchId(null);
+    setIsAttendance(false);
+    AsyncStorage.setItem('status', 'false');
+    handleDeleteAllLogs();
+    deleteAllTempLogs();
   };
-
-  const handleSaveLog = async () => {
-    try {
-      let num = await AsyncStorage.getItem('num');
-      num = num !== null ? parseInt(num) : 0; 
   
-      const watchId = Geolocation.watchPosition(
-        position => {
-          const currentDate = new Date();
-          const dateTime = currentDate.toUTCString();
-          const { latitude, longitude, altitude, speed, accuracy } = position.coords;
-  
-          if (accuracy <= 15) {
-            saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
-            saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
-          }
-            
-          loadLogs(); 
-            
-          num += 1;
-  
-          AsyncStorage.setItem('num', num.toString()); 
-        },
-        error => {
-          console.error('Error getting location:', error);
-        },
-        { 
-          enableHighAccuracy: true,
-          interval: 10000, 
-          fastestInterval: 10000,
-          forceRequestLocation: true,
-          distanceFilter: 0
-        }
-      );
-      
-      setWatchId(watchId); 
-      
-    } catch (error) {
-      console.error('Error with AsyncStorage or geolocation:', error);
-    }
-  };
-
-  const loadLogs = () => {
-    const data = getAllLogs();
-    setLogs(data);
-  };
-
   const handleDeleteAllLogs = () => {
     deleteAllLogs();
     loadLogs();
   };
-
-  const toggleTracking = () => {
-    if (isAttendance) {
-      setEndDateTime(new Date().toISOString());
-    } else {
-      setStartDateTime(new Date().toISOString());
-    }
-    setIsHide(true);
-    setCameraVisible(true);
-  };
-
-  const takePicture = async () => {
-    if(camera.current) {
-      const photo = await camera.current.takePhoto();
-      setImageData(photo.path);
-
-      const compressedImage = await ImageResizer.createResizedImage(
-        photo.path,
-        800,
-        600,
-        'JPEG',
-        50,
-        0
-      );
-
-      const base64Image = await RNFS.readFile(compressedImage.uri, 'base64');
-
-      try {
-        if (!isAttendance) {
-          setStartPicture(base64Image);
-        } else {
-          setEndPicture(base64Image);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-
-      setCameraVisible(false);
-      setPreviewVisible(true);
-
-    }
-  };
-
-  const handleConfirm = async () => {
-    try {
-      setIsHide(false);
-      setPreviewVisible(false);
-
-      const attendanceID = await AsyncStorage.getItem('attendanceID');
-      const endpoint = isAttendance
-        ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
-        : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
-      const method = isAttendance ? 'PUT' : 'POST';
-      const body = isAttendance
-        ? { endDateTime, endPicture }
-        : { startDateTime, startPicture };
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        if (!isAttendance) {
-          const data = await response.json();
-          AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
-          setIsAttendance(true);
-          handleSaveLog(); 
-          AsyncStorage.setItem('startPic', startPicture);
-          AsyncStorage.setItem('startDate', startDateTime);
-          AsyncStorage.setItem('status', 'true');
-        } else {
-          setIsAttendance(false);
-          AsyncStorage.setItem('status', 'false');
-          AsyncStorage.removeItem('attendanceID');
-          AsyncStorage.removeItem('logID');
-          deleteAllTempLogs();
-          deleteAllLogs();
-          stopWatching(); 
-        }
-      }
-    } catch (error) {
-      console.error('Error starting background task:', error);
-    }
-  };
-
-  const stopWatching = () => {
-    if (watchId !== null) {
-      Geolocation.clearWatch(watchId);  
-      setWatchId(null);  
-      AsyncStorage.removeItem('num'); 
-      setIsAttendance(false); 
-      AsyncStorage.setItem('status', 'false'); 
-    }
-  };
-
 
   const devices = useCameraDevices();
   const device = useCameraDevice('back');
