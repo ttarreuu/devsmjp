@@ -51,11 +51,11 @@ const AttendanceScreen = () => {
   };
   
   const toggleTracking = () => {
-    if (isAttendance) {
-      setEndDateTime(new Date().toISOString());
-    } else {
-      setStartDateTime(new Date().toISOString());
-    }
+    // if (isAttendance) {
+    //   setEndDateTime(new Date().toISOString());
+    // } else {
+    //   setStartDateTime(new Date().toISOString());
+    // }
     setIsHide(true);
     setCameraVisible(true);
   };
@@ -94,54 +94,48 @@ const AttendanceScreen = () => {
   
   const handleConfirm = async () => {
     try {
-      
+      const currentDateTime = new Date().toISOString(); // Get current timestamp
+
+      if (isAttendance) {
+        setEndDateTime(currentDateTime); // Set end time when stopping
+      } else {
+        setStartDateTime(currentDateTime); // Set start time when starting
+      }
+
       const attendanceID = await AsyncStorage.getItem('attendanceID');
       const endpoint = isAttendance
-      ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
-      : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
+        ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
+        : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
       const method = isAttendance ? 'PUT' : 'POST';
       const body = isAttendance
-        ? { endDateTime, endPicture }
-        : { startDateTime, startPicture };
+        ? { endDateTime: currentDateTime, endPicture }
+        : { startDateTime: currentDateTime, startPicture };
 
-        const response = await fetch(endpoint, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
 
       if (response.ok) {
         if (!isAttendance) {
           const data = await response.json();
           AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
-
-          // setIsAttendance(true);
-          // AsyncStorage.setItem('status', 'true');
-
           startWatching();
-          
         } else {
-          stopWatching(); 
-
+          stopWatching();
           AsyncStorage.removeItem('attendanceID');
           AsyncStorage.removeItem('logID');
-          
-          // deleteAllTempLogs();
-          // deleteAllLogs();
-          
-          // setIsAttendance(false);
-          // AsyncStorage.setItem('status', 'false');
-          
         }
       }
 
       setIsHide(false);
       setPreviewVisible(false);
-
     } catch (error) {
       console.error('Error starting background task:', error);
     }
   };
+
 
   const startWatching = async () => {
 
@@ -324,9 +318,7 @@ const AttendanceScreen = () => {
           <Text style={styles.buttonText}>
             {isAttendance ? 'Stop Background Task' : 'Start Background Task'}
           </Text>
-          
         </TouchableOpacity>
-        
       )}
       {isHide && cameraVisible && !previewVisible && device ? (
         <View style={{ flex: 1 }}>
