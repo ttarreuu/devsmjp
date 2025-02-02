@@ -304,7 +304,7 @@ const AttendanceScreen = () => {
   };
 
   const devices = useCameraDevices();
-  const device = useCameraDevice('back');
+  const device = useCameraDevice('front');
   const camera = useRef<Camera>(null);
 
   if(device == null) {
