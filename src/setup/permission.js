@@ -5,7 +5,9 @@ async function requestMultiplePermissions() {
         const permissions = [
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-            PermissionsAndroid.PERMISSIONS.CAMERA, // Add camera permission
+            PermissionsAndroid.PERMISSIONS.CAMERA,
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         ];
 
         // Add ACCESS_BACKGROUND_LOCATION only for Android 10 and above
@@ -25,6 +27,8 @@ async function requestMultiplePermissions() {
         const locationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
         const coarseLocationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
         const cameraGranted = granted[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED;
+        const readStorageGranted = granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
+        const writeStorageGranted = granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
 
         let backgroundLocationGranted = true; // Default true for versions below 29
         if (Platform.Version >= 29) {
@@ -36,7 +40,15 @@ async function requestMultiplePermissions() {
             notificationsGranted = granted[PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS] === PermissionsAndroid.RESULTS.GRANTED;
         }
 
-        if (locationGranted && coarseLocationGranted && cameraGranted && backgroundLocationGranted && notificationsGranted) {
+        if (
+            locationGranted &&
+            coarseLocationGranted &&
+            cameraGranted &&
+            readStorageGranted &&
+            writeStorageGranted &&
+            backgroundLocationGranted &&
+            notificationsGranted
+        ) {
             console.log('All requested permissions granted');
             return true;
         } else {

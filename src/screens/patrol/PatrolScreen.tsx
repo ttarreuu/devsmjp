@@ -136,10 +136,10 @@ const PatrolScreen = () => {
       dateTime: new Date().toISOString(),
       picture: picture,
       status: situationType,
+      checkpointID: nearestCheckpointID,
     };
 
     const newData = {
-      checkpointID: nearestCheckpointID,
       attendanceID: AttendanceID,
       logPatrol: [data],
     }

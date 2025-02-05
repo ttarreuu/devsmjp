@@ -7,6 +7,7 @@ import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-c
 import ImageResizer from 'react-native-image-resizer';
 import RNFS from "react-native-fs";
 import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
+import { saveLogsToStorage } from '../../data/encryptFile';
 
 const AttendanceScreen = () => {
   const [logs, setLogs] = useState([]);
@@ -123,9 +124,12 @@ const AttendanceScreen = () => {
           AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
           startWatching();
         } else {
+          // encryptAndStoreLogs();
+          saveLogsToStorage();
+
           stopWatching();
-          AsyncStorage.removeItem('attendanceID');
-          AsyncStorage.removeItem('logID');
+          // AsyncStorage.removeItem('attendanceID');
+          // AsyncStorage.removeItem('logID');
         }
       }
 
@@ -285,7 +289,7 @@ const AttendanceScreen = () => {
   
   const stopWatching = () => {
     handleDeleteAllLogs();
-    deleteAllTempLogs();
+    // deleteAllTempLogs();
     
     Geolocation.stopObserving(); 
     if (intervalRef.current) {

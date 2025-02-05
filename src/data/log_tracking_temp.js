@@ -19,13 +19,9 @@ const realm = new Realm({
   path: 'log_tracking_temp.realm' 
 });
 
-
 const getNextTempId = () => {
   const logs = realm.objects('LogTrackingTemp');
-  if (logs.length > 0) {
-    return logs.max('id') + 1; 
-  }
-  return 1; 
+  return logs.length > 0 ? logs.max('id') + 1 : 1;
 };
 
 export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
@@ -50,8 +46,7 @@ export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accu
 
 export const getAllTempLogs = () => {
   try {
-    const logs = realm.objects('LogTrackingTemp');
-    return logs.map(log => ({
+    return realm.objects('LogTrackingTemp').map(log => ({
       id: log.id,
       dateTime: log.dateTime,
       latitude: log.latitude,
