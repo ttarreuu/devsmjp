@@ -1,4 +1,9 @@
 import Realm from 'realm';
+import RNFS from 'react-native-fs';
+import RNSecureStorage from 'rn-secure-storage';
+import CryptoJS from 'react-native-crypto-js';
+import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LogTrackingTempSchema = {
   name: 'LogTrackingTemp',
@@ -61,7 +66,42 @@ export const getAllTempLogs = () => {
   }
 };
 
-export const deleteTempLogById = (id) => {
+const folderPath = RNFS.ExternalStorageDirectoryPath + '/logTracking';
+const id = async () => {
+  const att = await AsyncStorage.getItem('attendanceID');
+  return
+};
+const filePath = folderPath + '/' + id + '.aes';
+
+const initializeFolderStorage = async () => {
+  try {
+    const folderExists = await RNFS.exists(folderPath);
+    if (!folderExists) {
+      await RNFS.mkdir(folderPath);
+      console.log('Folder created: ', folderPath);
+    }
+  } catch (error) {
+    console.error("error initializing folder:", error);
+  }
+};
+
+
+const initializeFileStorage = async () => {
+  try {
+    // const filePath = await getFilePath();
+    const fileExists = await RNFS.exists(filePath);
+    if (!fileExists) {
+      const initialData = JSON.stringify({ logTracking: [] });
+      await RNFS.writeFile(filePath, initialData, 'utf8');
+      console.log('File created: ', filePath);
+    }
+  } catch (error) {
+    console.error('Error initializing file:', error);
+  }
+};
+
+export const deleteTempLogById = async (id) => {
+
   try {
     realm.write(() => {
       const log = realm.objectForPrimaryKey('LogTrackingTemp', id);
@@ -77,8 +117,20 @@ export const deleteTempLogById = (id) => {
   }
 };
 
-export const deleteAllTempLogs = () => {
+export const deleteAllTempLogs = async () => {
   try {
+    await initializeFolderStorage();
+    await initializeFileStorage();
+
+    const logs = getAllTempLogs();
+    
+    const key = await RNSecureStorage.getItem('encryptKey');
+    const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(logs), key).toString();
+
+    // const filePath = await getFilePath();
+    await RNFS.writeFile(filePath, encryptedData, 'utf8');
+    Alert.alert('Success', `File written successfully: ${filePath}`);
+
     realm.write(() => {
       const allLogs = realm.objects('LogTrackingTemp');
       realm.delete(allLogs);

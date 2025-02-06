@@ -26,13 +26,11 @@ const encryptData = (data, key) => {
 
 const saveLogsToStorage = async () => {
   try {
-    // Pastikan folder ada
     const folderExists = await RNFS.exists(folderPath);
     if (!folderExists) {
       await RNFS.mkdir(folderPath);
     }
 
-    // Ambil data log dari sumber
     const logs = await getAllTempLogs();
 
     if (logs.length === 0) {
@@ -40,10 +38,8 @@ const saveLogsToStorage = async () => {
       return;
     }
 
-    // Ambil atau buat encryption key
     const encryptionKey = await getEncryptionKey();
 
-    // Enkripsi data
     const encryptedLogs = encryptData(logs, encryptionKey);
 
     // Simpan ke file
