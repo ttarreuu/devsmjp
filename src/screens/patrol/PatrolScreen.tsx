@@ -24,8 +24,9 @@ const PatrolScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [isAttendance, setIsAttendance] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
-  
+
   const devices = useCameraDevices();
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
@@ -63,28 +64,33 @@ const PatrolScreen = () => {
   
   const readStatus = async () => {
     const statusAttendance = await AsyncStorage.getItem('status');
-    const statusCheckIn = await AsyncStorage.getItem('statusCheckIn');
-    if(statusAttendance && statusCheckIn == 'true') {
-      setIsCheckIn(true);
-    } else if(statusAttendance && statusCheckIn == 'false') {
-      setIsCheckIn(false);
+    if(statusAttendance) {
+      setIsAttendance(true);
+    } else if(!statusAttendance) {
+      setIsAttendance(false);
     }
   };
 
-  const checkProximity = (lat: number, lon: number) => {
-    const threshold = 50;
+  const checkProximity = async (lat: number, lon: number) => {
     let nearestCheckpoint = null;
 
     checkpoints.forEach((checkpoint) => {
       const distance = getDistance(lat, lon, checkpoint.latitude, checkpoint.longitude);
+      const threshold = checkpoint.radius;
       if (distance < threshold) {
-        nearestCheckpoint = checkpoint;
-        
+        nearestCheckpoint = checkpoint; 
       }
     });
+
     if (nearestCheckpoint) {
-      setNearestCheckpointID(nearestCheckpoint.checkpointID);
-      setModalVisible(true);
+      const checkedInCheckpoints = await AsyncStorage.getItem('checkedInCheckpoints');
+      const checkedInArray = checkedInCheckpoints ? JSON.parse(checkedInCheckpoints) : [];
+
+      if (!checkedInArray.includes(nearestCheckpoint.checkpointID)) {
+        setNearestCheckpointID(nearestCheckpoint.checkpointID);
+        setIsCheckIn(true);
+        setModalVisible(true);
+      }
     }
   };
 
@@ -154,10 +160,16 @@ const PatrolScreen = () => {
     });
 
     if(response.ok) {
-      setIsCheckIn(true);
-      AsyncStorage.setItem('statusCheckIn', 'true');
-  
-      setPreviewVisible(false);
+      const checkedInCheckpoints = await AsyncStorage.getItem('checkedInCheckpoints');
+    const checkedInArray = checkedInCheckpoints ? JSON.parse(checkedInCheckpoints) : [];
+
+    if (!checkedInArray.includes(nearestCheckpointID)) {
+      checkedInArray.push(nearestCheckpointID);
+      await AsyncStorage.setItem('checkedInCheckpoints', JSON.stringify(checkedInArray));
+    }
+
+    setIsCheckIn(false);
+    setPreviewVisible(false);
     }
   };
 
@@ -167,7 +179,6 @@ const PatrolScreen = () => {
         {currentLocation && (
           <Camera zoomLevel={19} centerCoordinate={[currentLocation.longitude, currentLocation.latitude]} />
         )}
-
         {logData.length > 1 && (
           <ShapeSource id="lineSource" shape={{
             type: "Feature",
@@ -184,7 +195,7 @@ const PatrolScreen = () => {
         ))}
       </MapView>
 
-      {!isCheckIn && (
+      {isAttendance && isCheckIn && (
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           {cameraVisible && device ? (
@@ -216,7 +227,7 @@ const PatrolScreen = () => {
             </View>
           ) : (
             <View style={styles.formContainer}>
-              <Text style={styles.modalText}>Datetime: {new Date().toLocaleString()}</Text>
+              <Text style={styles.modalText}>Datetime: {nearestCheckpointID}</Text>
               <TouchableOpacity style={styles.takePhotoButton} onPress={() => setCameraVisible(true)}>
                 <Text style={styles.buttonText}>Open Camera</Text>
               </TouchableOpacity>

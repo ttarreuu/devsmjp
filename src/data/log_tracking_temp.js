@@ -66,42 +66,32 @@ export const getAllTempLogs = () => {
   }
 };
 
-const folderPath = RNFS.ExternalStorageDirectoryPath + '/logTracking';
-const id = async () => {
-  const att = await AsyncStorage.getItem('attendanceID');
-  return
-};
-const filePath = folderPath + '/' + id + '.aes';
-
-const initializeFolderStorage = async () => {
-  try {
-    const folderExists = await RNFS.exists(folderPath);
+const rootPath = RNFS.ExternalStorageDirectoryPath + '/SMJP';
+const getFilePath = async (method) => {
+  const folderPath = rootPath + '/' + method;
+  const folderExists = await RNFS.exists(folderPath);
     if (!folderExists) {
       await RNFS.mkdir(folderPath);
       console.log('Folder created: ', folderPath);
+    };
+  const date = new Date().toLocaleTimeString();
+  const filePath = folderPath + '/' + date + '.aes';
+  return filePath;
+};
+
+const initializeFolderStorage = async () => {
+  try {
+    const rootExists = await RNFS.exists(rootPath);
+    if (!rootExists) {
+      await RNFS.mkdir(rootPath);
+      console.log('Folder created: ', rootPath);
     }
   } catch (error) {
     console.error("error initializing folder:", error);
   }
 };
 
-
-const initializeFileStorage = async () => {
-  try {
-    // const filePath = await getFilePath();
-    const fileExists = await RNFS.exists(filePath);
-    if (!fileExists) {
-      const initialData = JSON.stringify({ logTracking: [] });
-      await RNFS.writeFile(filePath, initialData, 'utf8');
-      console.log('File created: ', filePath);
-    }
-  } catch (error) {
-    console.error('Error initializing file:', error);
-  }
-};
-
 export const deleteTempLogById = async (id) => {
-
   try {
     realm.write(() => {
       const log = realm.objectForPrimaryKey('LogTrackingTemp', id);
@@ -120,9 +110,13 @@ export const deleteTempLogById = async (id) => {
 export const deleteAllTempLogs = async () => {
   try {
     await initializeFolderStorage();
-    await initializeFileStorage();
+    let method =  'logTracking'
+    const filePath = await getFilePath(method);
 
     const logs = getAllTempLogs();
+
+    const initialData = JSON.stringify({ logTracking: [] });
+    await RNFS.writeFile(filePath, initialData, 'utf8');
     
     const key = await RNSecureStorage.getItem('encryptKey');
     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(logs), key).toString();

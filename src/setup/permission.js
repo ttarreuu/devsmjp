@@ -10,12 +10,12 @@ async function requestMultiplePermissions() {
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         ];
 
-        // Add ACCESS_BACKGROUND_LOCATION only for Android 10 and above
+        // Add ACCESS_BACKGROUND_LOCATION only for Android 10 (API level 29) and above
         if (Platform.Version >= 29) {
             permissions.push(PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION);
         }
 
-        // Add POST_NOTIFICATIONS only for Android 13 and above
+        // Add POST_NOTIFICATIONS only for Android 13 (API level 33) and above
         if (Platform.Version >= 33) {
             permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
         }

@@ -28,13 +28,12 @@ const getNextId = () => {
   if (logs.length > 0) {
     return logs.max('id') + 1; // Get the max ID and increment by 1
   }
-  return 1; // Start with 1 if no records exist
+  return 1; 
 };
 
-// Save a new log to the database
 export const saveLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
   try {
-    const id = getNextId(); // Get the next auto-incremented ID
+    const id = getNextId(); 
     realm.write(() => {
       realm.create('LogTracking', {
         id,
