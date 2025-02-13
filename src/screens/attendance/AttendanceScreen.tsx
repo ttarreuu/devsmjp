@@ -1,18 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Button, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Geolocation from 'react-native-geolocation-service'; 
-import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
 import ImageResizer from 'react-native-image-resizer';
 import RNFS from "react-native-fs";
-import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
-
+import { sendDataTrackingToApi, sendDataPatrolToApi } from '../../data/sendDataToApi';
 import RNSecureStorage, { ACCESSIBLE } from 'rn-secure-storage';
 import uuid from 'react-native-uuid';
 
+import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
+import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
+
+
+import { deleteAllTempPatrolLogs, deleteLogPatrolTempLogById, getAllLogPatrolTempLogs } from '../../data/log_patrol_temp';
+import { getAllLogsPatrol, deleteAllLogsPatrol, deleteLogPatrolById } from '../../data/log_patrol';
+
 const AttendanceScreen = () => {
   const [logs, setLogs] = useState([]);
+  const [logsPatrol, setLogsPatrol] = useState([]);
   const [watchId, setWatchId] = useState(null);
   
   const [imageData, setImageData] = useState('');
@@ -36,7 +42,9 @@ const AttendanceScreen = () => {
   
   const loadLogs = () => {
     const data = getAllLogs();
+    const dataPatrol = getAllLogsPatrol();
     setLogs(data);
+    setLogsPatrol(dataPatrol);
   };
   
   const readStatus = async () => {
@@ -195,10 +203,10 @@ const AttendanceScreen = () => {
 
   const pushLogsToApi = async () => {
     try {
-      const logData = await getAllLogs();
-      if (logData && logData.length > 0) {
-        for (const log of logData) {
-          const newData = {
+      const logTrackingData = await getAllLogs();
+      if (logTrackingData && logTrackingData.length > 0) {
+        for (const log of logTrackingData) {
+          const newDataTracking = {
             dateTime: log.dateTime,
             latitude: log.latitude,
             longitude: log.longitude,
@@ -207,99 +215,36 @@ const AttendanceScreen = () => {
             accuracy: log.accuracy,
           };
 
-          await sendDataToApi(newData);
-          await deleteLogById(log.id);
-
+          await sendDataTrackingToApi(newDataTracking);
+          deleteLogById(log.id);
         }
         loadLogs(); 
       }
+
+      const logPatrolData = getAllLogPatrolTempLogs()
+      if (logPatrolData && logPatrolData.length > 0) {
+        for (const log of logPatrolData) {
+          const newDataPatrol = {
+            dateTime: log.dateTime,
+            picture: log.picture,
+            situationType: log.situationType,
+            checkpointID: log.checkpointID
+          };
+
+          await sendDataPatrolToApi(newDataPatrol);
+          deleteLogPatrolById(log.id);
+        }
+      }
+
     } catch (error) {
       console.error('Error pushing logs to API:', error);
     }
   };
   
-  const sendDataToApi = async (newData: {
-    dateTime: string;
-    latitude: number;
-    longitude: number;
-    altitude: number;
-    speed: number;
-    accuracy: number;
-  }) => {
-    try {
-      const AttendanceID = await AsyncStorage.getItem('attendanceID');
-      if (!AttendanceID) {
-        console.error('AttendanceID not found in AsyncStorage');
-        return;
-      }
-
-      const logID = await AsyncStorage.getItem('id');
-      if (!logID) {
-        console.log('id not found in AsyncStorage');
-      }
-
-      const apiURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${AttendanceID}/LogTracking`;
-
-      const response = await fetch(apiURL + '/' + logID, {
-        method: 'GET',
-      });
-
-      let existingData;
-
-      if (!response.ok) {
-        existingData = {
-          logTrackingID: logID,
-          attendanceID: AttendanceID,
-          logTracking: [newData],
-        };
-
-        const postResponse = await fetch(apiURL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(existingData),
-        });
-
-        if (postResponse.ok) {
-          const createdData = await postResponse.json(); 
-          console.log('New data created successfully:', createdData);
-
-          const { logTrackingID } = createdData;
-          console.log('Generated logTrackingID:', logTrackingID);
-          AsyncStorage.setItem('id', logTrackingID);
-        } else {
-          console.error('Error creating new data:', postResponse.statusText);
-        }
-
-        return;
-      }
-
-      existingData = await response.json();
-
-      if (!Array.isArray(existingData.logTracking)) {
-        existingData.logTracking = [];
-      }
-
-      existingData.logTracking.unshift(newData);
-
-      await fetch(apiURL + '/' + logID, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(existingData),
-      });
-      
-      console.log('Data updated successfully');
-    } catch (error) {
-      console.error('Error sending data to API:', error);
-    }
-  };
-  
-  const stopWatching = () => {
+  const stopWatching = async () => {
     handleDeleteAllLogs();
     deleteAllTempLogs();
+    deleteAllTempPatrolLogs();
     
     Geolocation.stopObserving(); 
     if (intervalRef.current) {
@@ -314,6 +259,7 @@ const AttendanceScreen = () => {
   
   const handleDeleteAllLogs = () => {
     deleteAllLogs();
+    deleteAllLogsPatrol();
     loadLogs();
   };
 

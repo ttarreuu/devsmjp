@@ -1,39 +1,16 @@
-import Realm from 'realm';
-import RNFS from 'react-native-fs';
-import RNSecureStorage from 'rn-secure-storage';
-import CryptoJS from 'react-native-crypto-js';
-import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import realmInstance from './realmConfig';
+import { saveLogsToFile } from './storageUtils';
 
-const LogTrackingTempSchema = {
-  name: 'LogTrackingTemp',
-  primaryKey: 'id',
-  properties: {
-    id: 'int', 
-    dateTime: 'date', 
-    latitude: 'double',
-    longitude: 'double',
-    altitude: 'double',
-    speed: 'double',
-    accuracy: 'double',
-  },
-};
-
-const realm = new Realm({ 
-  schema: [LogTrackingTempSchema],
-  path: 'log_tracking_temp.realm' 
-});
-
-const getNextTempId = () => {
-  const logs = realm.objects('LogTrackingTemp');
+export const getNextTempId = () => {
+  const logs = realmInstance.objects('LogTrackingTemp');
   return logs.length > 0 ? logs.max('id') + 1 : 1;
 };
 
 export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
   try {
-    const id = getNextTempId(); 
-    realm.write(() => {
-      realm.create('LogTrackingTemp', {
+    const id = getNextTempId();
+    realmInstance.write(() => {
+      realmInstance.create('LogTrackingTemp', {
         id,
         dateTime,
         latitude,
@@ -51,7 +28,7 @@ export const saveTempLog = (dateTime, latitude, longitude, altitude, speed, accu
 
 export const getAllTempLogs = () => {
   try {
-    return realm.objects('LogTrackingTemp').map(log => ({
+    return realmInstance.objects('LogTrackingTemp').map(log => ({
       id: log.id,
       dateTime: log.dateTime,
       latitude: log.latitude,
@@ -66,37 +43,12 @@ export const getAllTempLogs = () => {
   }
 };
 
-const rootPath = RNFS.ExternalStorageDirectoryPath + '/SMJP';
-const getFilePath = async (method) => {
-  const folderPath = rootPath + '/' + method;
-  const folderExists = await RNFS.exists(folderPath);
-    if (!folderExists) {
-      await RNFS.mkdir(folderPath);
-      console.log('Folder created: ', folderPath);
-    };
-  const date = new Date().toLocaleTimeString();
-  const filePath = folderPath + '/' + date + '.aes';
-  return filePath;
-};
-
-const initializeFolderStorage = async () => {
-  try {
-    const rootExists = await RNFS.exists(rootPath);
-    if (!rootExists) {
-      await RNFS.mkdir(rootPath);
-      console.log('Folder created: ', rootPath);
-    }
-  } catch (error) {
-    console.error("error initializing folder:", error);
-  }
-};
-
 export const deleteTempLogById = async (id) => {
   try {
-    realm.write(() => {
-      const log = realm.objectForPrimaryKey('LogTrackingTemp', id);
+    realmInstance.write(() => {
+      const log = realmInstance.objectForPrimaryKey('LogTrackingTemp', id);
       if (log) {
-        realm.delete(log);
+        realmInstance.delete(log);
         console.log('Temporary log deleted:', id);
       } else {
         console.log('Temporary log not found:', id);
@@ -107,27 +59,14 @@ export const deleteTempLogById = async (id) => {
   }
 };
 
-export const deleteAllTempLogs = async () => {
+export const deleteAllTempLogs = () => {
   try {
-    await initializeFolderStorage();
-    let method =  'logTracking'
-    const filePath = await getFilePath(method);
-
     const logs = getAllTempLogs();
+    saveLogsToFile(logs, 'logTracking'); 
 
-    const initialData = JSON.stringify({ logTracking: [] });
-    await RNFS.writeFile(filePath, initialData, 'utf8');
-    
-    const key = await RNSecureStorage.getItem('encryptKey');
-    const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(logs), key).toString();
-
-    // const filePath = await getFilePath();
-    await RNFS.writeFile(filePath, encryptedData, 'utf8');
-    Alert.alert('Success', `File written successfully: ${filePath}`);
-
-    realm.write(() => {
-      const allLogs = realm.objects('LogTrackingTemp');
-      realm.delete(allLogs);
+    realmInstance.write(() => {
+      const allLogs = realmInstance.objects('LogTrackingTemp');
+      realmInstance.delete(allLogs);
     });
     console.log('All temporary logs deleted.');
   } catch (error) {
@@ -135,4 +74,4 @@ export const deleteAllTempLogs = async () => {
   }
 };
 
-export const getTempRealmInstance = () => realm;
+export const getTempRealmInstance = () => realmInstance;

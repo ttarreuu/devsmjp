@@ -8,6 +8,8 @@ import { getCheckpoints } from "../../data/checkpoint_data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ImageResizer from 'react-native-image-resizer';
 import RNFS from "react-native-fs";
+import { saveLogPatrolTempLog } from "../../data/log_patrol_temp";
+import { saveLogPatrol } from "../../data/log_patrol";
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -16,7 +18,7 @@ const PatrolScreen = () => {
   const [checkpoints, setCheckpoints] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
-  const [situationType, setSituationType] = useState(null);
+  const [situationType, setSituationType] = useState('');
   const [picture, setPicture] = useState('');
   const [nearestCheckpointID, setNearestCheckpointID] = useState(null);
 
@@ -136,42 +138,27 @@ const PatrolScreen = () => {
   };
 
   const handleConfirm = async () => {
-    const AttendanceID = await AsyncStorage.getItem('attendanceID');
-
-    const data = {
-      dateTime: new Date().toISOString(),
-      picture: picture,
-      status: situationType,
-      checkpointID: nearestCheckpointID,
-    };
-
-    const newData = {
-      attendanceID: AttendanceID,
-      logPatrol: [data],
-    }
-
-
-    const apiURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${AttendanceID}/LogPatrol`;
-
-    const response = await fetch(apiURL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newData),
-    });
-
-    if(response.ok) {
+    try {
+      const dateTime = new Date().toISOString();
+      
       const checkedInCheckpoints = await AsyncStorage.getItem('checkedInCheckpoints');
-    const checkedInArray = checkedInCheckpoints ? JSON.parse(checkedInCheckpoints) : [];
+      const checkedInArray = checkedInCheckpoints ? JSON.parse(checkedInCheckpoints) : [];
 
-    if (!checkedInArray.includes(nearestCheckpointID)) {
-      checkedInArray.push(nearestCheckpointID);
-      await AsyncStorage.setItem('checkedInCheckpoints', JSON.stringify(checkedInArray));
-    }
+      saveLogPatrolTempLog(dateTime, picture, situationType, nearestCheckpointID);
+      saveLogPatrol(dateTime, picture, situationType, nearestCheckpointID);
+      
+      if (!checkedInArray.includes(nearestCheckpointID)) {
+        checkedInArray.push(nearestCheckpointID);
+        await AsyncStorage.setItem('checkedInCheckpoints', JSON.stringify(checkedInArray));
+      }
 
-    setIsCheckIn(false);
-    setPreviewVisible(false);
+      setIsCheckIn(false);
+      setPreviewVisible(false);
+      
+    } catch (err) {
+      console.log(err);
     }
-  };
+};
 
   return (
     <View style={styles.page}>
