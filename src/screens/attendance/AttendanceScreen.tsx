@@ -8,6 +8,7 @@ import RNFS from "react-native-fs";
 import { sendDataTrackingToApi, sendDataPatrolToApi } from '../../data/sendDataToApi';
 import RNSecureStorage, { ACCESSIBLE } from 'rn-secure-storage';
 import uuid from 'react-native-uuid';
+import NetInfo from "@react-native-community/netinfo";
 
 import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
 import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
@@ -31,6 +32,7 @@ const AttendanceScreen = () => {
   const [endDateTime, setEndDateTime] = useState('');
   const [startPicture, setStartPicture] = useState('');
   const [endPicture, setEndPicture] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timer | null>(null);
   
@@ -38,7 +40,17 @@ const AttendanceScreen = () => {
     loadLogs();
     readStatus();
     checkPermission();
+
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const checkInternetConnection = async () => {
+    return await NetInfo.fetch().then((state: { isConnected: any; }) => state.isConnected);
+  };
   
   const loadLogs = () => {
     const data = getAllLogs();
@@ -137,6 +149,8 @@ const AttendanceScreen = () => {
           // encryptAndStoreLogs();
           // saveLogsToStorage();
 
+          await pushLogsToApi();
+
           stopWatching();
           AsyncStorage.removeItem('attendanceID');
           AsyncStorage.removeItem('logID');
@@ -192,9 +206,10 @@ const AttendanceScreen = () => {
         }
       );
 
-      intervalRef.current = setInterval(() => {
-        
-        pushLogsToApi();
+      intervalRef.current = setInterval(async () => {
+        if(await checkInternetConnection()) {
+          pushLogsToApi();
+        }
       }, 60000);
       
     } catch (error) {
@@ -275,7 +290,11 @@ const AttendanceScreen = () => {
   return (
     <View style={{flex:1}}>
       {!isHide && !cameraVisible && !previewVisible && (
-        <TouchableOpacity style={styles.button} onPress={toggleTracking}>
+        <TouchableOpacity 
+          style={[styles.button, !isConnected && { opacity: 0.5 }]} 
+          onPress={toggleTracking} 
+          disabled={!isConnected}
+          >
           <Text style={styles.buttonText}>
             {isAttendance ? 'Stop Background Task' : 'Start Background Task'}
           </Text>
