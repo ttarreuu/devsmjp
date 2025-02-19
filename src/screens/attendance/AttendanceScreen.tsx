@@ -193,6 +193,7 @@ const AttendanceScreen = () => {
       );
 
       intervalRef.current = setInterval(() => {
+        
         pushLogsToApi();
       }, 60000);
       
@@ -203,7 +204,7 @@ const AttendanceScreen = () => {
 
   const pushLogsToApi = async () => {
     try {
-      const logTrackingData = await getAllLogs();
+      const logTrackingData = getAllLogs();
       if (logTrackingData && logTrackingData.length > 0) {
         for (const log of logTrackingData) {
           const newDataTracking = {
@@ -221,7 +222,7 @@ const AttendanceScreen = () => {
         loadLogs(); 
       }
 
-      const logPatrolData = getAllLogPatrolTempLogs()
+      const logPatrolData = getAllLogsPatrol()
       if (logPatrolData && logPatrolData.length > 0) {
         for (const log of logPatrolData) {
           const newDataPatrol = {

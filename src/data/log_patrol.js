@@ -82,7 +82,7 @@ export const deleteAllLogsPatrol = () => {
   try {
     realm.write(() => {
       const allLogs = realm.objects('LogPatrol');
-      realm.delete(allLogs); // Deletes all logs
+      realm.delete(allLogs); 
     });
     console.log('All logs deleted.');
   } catch (error) {
