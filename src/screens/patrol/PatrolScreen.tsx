@@ -9,7 +9,7 @@ import RNFS from "react-native-fs";
 import { saveLogPatrolTempLog } from "../../data/log_patrol_temp";
 import { saveLogPatrol } from "../../data/log_patrol";
 import { getAllTempLogs } from "../../data/log_tracking_temp";
-import { getCheckpoints } from "../../data/checkpoint_data";
+import realmInstance from "../../data/realmConfig";
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -34,12 +34,7 @@ const PatrolScreen = () => {
     readStatus();
     setLogData(getAllTempLogs());
 
-    const fetchCheckpoints = async () => {
-      const data = await getCheckpoints();
-      setCheckpoints(data);
-    };
-    fetchCheckpoints();
-
+    fetchCheckpoints();    
     const watchId = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -52,21 +47,26 @@ const PatrolScreen = () => {
       (error) => console.error("Error watching position:", error),
       { enableHighAccuracy: true, distanceFilter: 1, interval: 1000, fastestInterval: 500 }
     );
-
+    
     return () => {
       if (watchId) Geolocation.clearWatch(watchId);
     };
-  }, [checkpoints]);
+  }, [currentLocation]);
+  
+  const fetchCheckpoints = async () => {
+    const allCheckpoints = realmInstance.objects('Checkpoint');
+    setCheckpoints(allCheckpoints);
+  };
 
   const readStatus = async () => {
     const statusAttendance = await AsyncStorage.getItem('status');
     setIsAttendance(statusAttendance === 'true');
   };
-
+  
   const checkProximity = (lat: number, lon: number) => {
     let nearest = null;
     let minDistance = Infinity;
-
+    
     checkpoints.forEach((checkpoint) => {
       const distance = getDistance(lat, lon, checkpoint.latitude, checkpoint.longitude);
       if (distance < checkpoint.radius && distance < minDistance) {
@@ -75,7 +75,7 @@ const PatrolScreen = () => {
       }
     });
 
-    if (nearest) {
+    if (nearest !== '') {
       setNearestCheckpoint(nearest);
       setIsCheckIn(true);
     } else {
@@ -85,7 +85,7 @@ const PatrolScreen = () => {
   };
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371000; // Radius of the Earth in meters
+    const R = 6371000;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =

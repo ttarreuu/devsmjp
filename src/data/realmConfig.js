@@ -53,8 +53,19 @@ const LogPatrolTempSchema = {
   }
 };
 
+const CheckpointSchema = {
+  name: 'Checkpoint',
+  properties: {
+    name: 'string',
+    latitude: 'double',
+    longitude: 'double',
+    radius: 'int',
+    checkpointID: 'string',
+  },
+};
+
 const realmInstance = new Realm({
-  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema],
+  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema],
   path: 'log_temp.realm', // Use a single Realm file for both schemas
 });
 
