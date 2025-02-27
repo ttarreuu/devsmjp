@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { StyleSheet, Text, View, Alert, TouchableOpacity, Image } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
-import { Camera as VisionCamera, useCameraDevice } from "react-native-vision-camera";
+import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ImageResizer from 'react-native-image-resizer';
 import RNFS from "react-native-fs";
@@ -23,12 +23,27 @@ const PatrolScreen = () => {
   const [nearestCheckpoint, setNearestCheckpoint] = useState(null);
 
   const [cameraVisible, setCameraVisible] = useState(false);
+  const [cameraQRVisible, setCameraQRVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
+  const [isMethod, setIsMethod] = useState('');
+  const [qrCode, setQrCode] = useState('');
 
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
+
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr'],
+    onCodeScanned: (codes) => {
+      const scannedCode = codes[0]?.value;
+      if (scannedCode) {
+        setQrCode(scannedCode);
+        setCameraQRVisible(false);  
+        console.log(`Scanned QR Code: ${scannedCode}`);
+      }
+    },
+  });
 
   useEffect(() => {
     readStatus();
@@ -191,10 +206,22 @@ const PatrolScreen = () => {
         
       </MapView>
 
-      {isAttendance && isCheckIn && !previewVisible &&(
-        <TouchableOpacity style={styles.floatingButton} onPress={() => setCameraVisible(true)}>
-          <Text style={styles.buttonText}>Check-in</Text>
-        </TouchableOpacity>
+      {isAttendance && isCheckIn && !previewVisible && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.floatingButton} onPress={() => {
+            setCameraVisible(true);
+            setIsMethod('GPS');
+            }}>
+            <Text style={styles.buttonText}>Check-in</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.floatingButton} onPress={() => {
+            setCameraQRVisible(true);
+            setIsMethod('QR');
+            }}>
+            <Text style={styles.buttonText}>Scan QR</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {cameraVisible && device && (
@@ -202,6 +229,24 @@ const PatrolScreen = () => {
           <VisionCamera ref={cameraRef} style={styles.camera} device={device} isActive={true} photo={true} />
           <TouchableOpacity style={styles.captureButton} onPress={takePicture} />
         </>
+      )}
+
+      {cameraQRVisible && device && (
+        <View style={styles.cameraContainer}>
+          <VisionCamera
+            ref={cameraRef}
+            style={styles.camera}
+            device={device}
+            isActive={true}
+            codeScanner={codeScanner}
+          />
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setCameraQRVisible(false)}
+          >
+            <Text style={styles.buttonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {previewVisible && (
@@ -232,13 +277,18 @@ const styles = StyleSheet.create({
   map: { 
     flex: 1 
   },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 30,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
   floatingButton: { 
-    position: "absolute", 
-    bottom: 30, 
-    right: 20, 
     backgroundColor: "blue", 
     padding: 15, 
-    borderRadius: 10 
+    borderRadius: 10, 
+    marginHorizontal: 5 
   },
   buttonText: { 
     color: "white", 
@@ -277,11 +327,6 @@ const styles = StyleSheet.create({
     fontSize: 18, 
     marginBottom: 10 
   },
-  buttonContainer: { 
-    flexDirection: "row", 
-    justifyContent: "space-around", 
-    width: "80%" 
-  },
   optionButton: { 
     backgroundColor: "gray", 
     padding: 10, 
@@ -307,7 +352,25 @@ const styles = StyleSheet.create({
     lineColor: "#00FF00", // Direction line color
     lineWidth: 2,
     lineDasharray: [2, 2], // Dashed line
-  }
+  },
+  cameraContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 5,
+  },
 });
 
 export default PatrolScreen;
