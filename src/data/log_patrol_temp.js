@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import realmInstance from './realmConfig';
 import { saveLogsToFile } from './storageUtils';
 
@@ -7,7 +6,7 @@ export const getNextTempId = () => {
   return logs.length > 0 ? logs.max('id') + 1 : 1;
 };
 
-export const saveLogPatrolTempLog = (dateTime, picture, situationType, checkpointID) => {
+export const saveLogPatrolTempLog = (dateTime, picture, situationType, checkpointID, method) => {
   try {
     const id = getNextTempId();
     realmInstance.write(() => {
@@ -16,7 +15,8 @@ export const saveLogPatrolTempLog = (dateTime, picture, situationType, checkpoin
         dateTime,
         picture,
         situationType,
-        checkpointID: Number(checkpointID),
+        checkpointID,
+        method,
       });
     });
     console.log('Temporary patrol log saved:', { id, checkpointID });
@@ -32,7 +32,8 @@ export const getAllLogPatrolTempLogs = () => {
       dateTime: log.dateTime,
       picture: log.picture,
       situationType: log.situationType,
-      checkpointID: log.checkpointID
+      checkpointID: log.checkpointID,
+      method: log.method,
     }));
   } catch (error) {
     console.error('Error fetching patrol temporary logs:', error);

@@ -195,7 +195,7 @@ const AttendanceScreen = () => {
           const dateTime = currentDate.toUTCString();
           const { latitude, longitude, altitude, speed, accuracy } = position.coords;
   
-          if (accuracy <= 15) {
+          if (accuracy < 15) {
             saveLog(dateTime, latitude, longitude, altitude, speed, accuracy);
             saveTempLog(dateTime, latitude, longitude, altitude, speed, accuracy);
           }
@@ -253,7 +253,8 @@ const AttendanceScreen = () => {
             dateTime: log.dateTime,
             picture: log.picture,
             situationType: log.situationType,
-            checkpointID: log.checkpointID
+            checkpointID: log.checkpointID,
+            method: log.method
           };
 
           await sendDataPatrolToApi(newDataPatrol);

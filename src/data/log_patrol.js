@@ -1,46 +1,28 @@
-import Realm from 'realm';
-
-const LogPatrolSchema = {
-  name: 'LogPatrol',
-  primaryKey: 'id',
-  properties: {
-    id: 'int',
-    dateTime: 'date',
-    picture: 'string',
-    situationType: 'string',
-    checkpointID: 'int',
-  },
-};
-
-// Create a Realm instance
-const realm = new Realm({ 
-  schema: [LogPatrolSchema],
-  path: 'log_patrol.realm' // Unique path for the main database
-});
-
+import realmInstance from './realmConfig'; // Correct way to import default export
 
 // Get the next ID for auto-increment
 const getNextId = () => {
-  const logs = realm.objects('LogPatrol');
+  const logs = realmInstance.objects('LogPatrol');
   if (logs.length > 0) {
     return logs.max('id') + 1; // Get the max ID and increment by 1
   }
   return 1; 
 };
 
-export const saveLogPatrol = (dateTime, picture, situationType, checkpointID) => {
+export const saveLogPatrol = (dateTime, picture, situationType, checkpointID, method) => {
   try {
     const id = getNextId(); 
-    realm.write(() => {
-      realm.create('LogPatrol', {
+    realmInstance.write(() => {
+      realmInstance.create('LogPatrol', {
         id,
         dateTime,
         picture,
         situationType,
-        checkpointID: Number(checkpointID),
+        checkpointID,
+        method,
       });
     });
-    console.log('Log saved:', { id, dateTime, checkpointID, situationType });
+    console.log('Log saved:', { id, dateTime, checkpointID, situationType, method });
   } catch (error) {
     console.error('Error saving log:', error);
   }
@@ -48,13 +30,14 @@ export const saveLogPatrol = (dateTime, picture, situationType, checkpointID) =>
 
 export const getAllLogsPatrol = () => {
   try {
-    const logs = realm.objects('LogPatrol');
+    const logs = realmInstance.objects('LogPatrol');
     return logs.map(log => ({
       id: log.id,
       dateTime: log.dateTime,
       picture: log.picture,
       situationType: log.situationType,
-      checkpointID: log.checkpointID
+      checkpointID: log.checkpointID,
+      method: log.method
     }));
   } catch (error) {
     console.error('Error fetching logs:', error);
@@ -64,10 +47,10 @@ export const getAllLogsPatrol = () => {
 
 export const deleteLogPatrolById = (id) => {
   try {
-    realm.write(() => {
-      const log = realm.objectForPrimaryKey('LogPatrol', id);
+    realmInstance.write(() => {
+      const log = realmInstance.objectForPrimaryKey('LogPatrol', id);
       if (log) {
-        realm.delete(log);
+        realmInstance.delete(log);
         console.log('Log deleted:', id);
       } else {
         console.log('Log not found:', id);
@@ -80,9 +63,9 @@ export const deleteLogPatrolById = (id) => {
 
 export const deleteAllLogsPatrol = () => {
   try {
-    realm.write(() => {
-      const allLogs = realm.objects('LogPatrol');
-      realm.delete(allLogs); 
+    realmInstance.write(() => {
+      const allLogs = realmInstance.objects('LogPatrol');
+      realmInstance.delete(allLogs); 
     });
     console.log('All logs deleted.');
   } catch (error) {
@@ -90,4 +73,4 @@ export const deleteAllLogsPatrol = () => {
   }
 };
 
-export const getLogPatrolRealmInstance = () => realm;
+export const getLogPatrolRealmInstance = () => realmInstance;

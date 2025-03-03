@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, Alert, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
@@ -41,6 +41,11 @@ const PatrolScreen = () => {
         setQrCode(scannedCode);
         setCameraQRVisible(false);  
         console.log(`Scanned QR Code: ${scannedCode}`);
+        // Check if the scanned QR code matches the nearest checkpoint ID
+        if (nearestCheckpoint && scannedCode === nearestCheckpoint.checkpointID) {
+          // If it matches, set isCheckIn to true to show the check-in button
+            setCameraVisible(true);
+        } 
       }
     },
   });
@@ -127,8 +132,8 @@ const PatrolScreen = () => {
   const handleConfirm = async () => {
     try {
       const dateTime = new Date().toISOString();
-      saveLogPatrolTempLog(dateTime, picture, situationType, nearestCheckpoint?.checkpointID);
-      saveLogPatrol(dateTime, picture, situationType, nearestCheckpoint?.checkpointID);
+      saveLogPatrolTempLog(dateTime, picture, situationType, nearestCheckpoint?.checkpointID, isMethod);
+      saveLogPatrol(dateTime, picture, situationType, nearestCheckpoint?.checkpointID, isMethod);
       setIsCheckIn(false);
       setPreviewVisible(false);
     } catch (err) {
@@ -173,13 +178,13 @@ const PatrolScreen = () => {
 
         {/* Checkpoint markers */}
         {checkpoints.map((checkpoint) => (
-          <PointAnnotation
+          <><PointAnnotation
             key={checkpoint.checkpointID}
             id={checkpoint.checkpointID}
             coordinate={[checkpoint.longitude, checkpoint.latitude]}
           >
             <View style={styles.checkpoint} />
-          </PointAnnotation>
+          </PointAnnotation></>
         ))}
 
         {/* Directions from current location to the nearest checkpoint */}
@@ -203,12 +208,13 @@ const PatrolScreen = () => {
             />
           </ShapeSource>
         )}
-        
       </MapView>
 
-      {isAttendance && isCheckIn && !previewVisible && (
+      {isAttendance && isCheckIn && !previewVisible && currentLocation && nearestCheckpoint && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.floatingButton} onPress={() => {
+          <TouchableOpacity 
+            style={styles.floatingButton} 
+            onPress={() => {
             setCameraVisible(true);
             setIsMethod('GPS');
             }}>
@@ -370,6 +376,12 @@ const styles = StyleSheet.create({
     backgroundColor: "red",
     padding: 10,
     borderRadius: 5,
+  },
+  checkpointName: {
+    marginTop: 5, // Space between the point and the name
+    fontSize: 12, // Adjust font size as needed
+    color: 'black', // Change color as needed
+    textAlign: 'center', // Center the text
   },
 });
 
