@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Image, Modal, Alert } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
@@ -10,6 +10,7 @@ import { saveLogPatrolTempLog } from "../../data/log_patrol_temp";
 import { saveLogPatrol } from "../../data/log_patrol";
 import { getAllTempLogs } from "../../data/log_tracking_temp";
 import realmInstance from "../../data/realmConfig";
+import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -21,6 +22,7 @@ const PatrolScreen = () => {
   const [situationType, setSituationType] = useState('');
   const [picture, setPicture] = useState('');
   const [nearestCheckpoint, setNearestCheckpoint] = useState(null);
+  const [nfcTagData, setNfcTagData] = useState('');
 
   const [cameraVisible, setCameraVisible] = useState(false);
   const [cameraQRVisible, setCameraQRVisible] = useState(false);
@@ -29,6 +31,7 @@ const PatrolScreen = () => {
   const [isCheckIn, setIsCheckIn] = useState(false);
   const [isMethod, setIsMethod] = useState('');
   const [qrCode, setQrCode] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
@@ -41,9 +44,7 @@ const PatrolScreen = () => {
         setQrCode(scannedCode);
         setCameraQRVisible(false);  
         console.log(`Scanned QR Code: ${scannedCode}`);
-        // Check if the scanned QR code matches the nearest checkpoint ID
         if (nearestCheckpoint && scannedCode === nearestCheckpoint.checkpointID) {
-          // If it matches, set isCheckIn to true to show the check-in button
             setCameraVisible(true);
         } 
       }
@@ -53,7 +54,7 @@ const PatrolScreen = () => {
   useEffect(() => {
     readStatus();
     setLogData(getAllTempLogs());
-
+    NfcManager.start();
     fetchCheckpoints();    
     const watchId = Geolocation.watchPosition(
       (position) => {
@@ -72,6 +73,34 @@ const PatrolScreen = () => {
       if (watchId) Geolocation.clearWatch(watchId);
     };
   }, [currentLocation]);
+
+
+  const readNdef = async () => {
+    try {
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+    const tag = await NfcManager.getTag();
+
+    if (tag?.ndefMessage) {
+      const ndefPayload = tag.ndefMessage[0].payload;
+      const decodedData = Ndef.text.decodePayload(ndefPayload);
+      console.log("NFC Data:", decodedData);
+      setNfcTagData(decodedData);
+      if (nearestCheckpoint && decodedData === nearestCheckpoint.checkpointID) {
+        setCameraVisible(true);
+      } else {
+        Alert.alert("Data on NFC does not match. Please try again or use a valid NFC tag.");
+      }
+    } else {
+      console.log("No NDEF data found");
+      Alert.alert("No data found on NFC. Please scan a valid NFC tag.");
+    }
+  } catch (ex) {
+    console.warn('Oops!', ex);
+  } finally {
+    NfcManager.cancelTechnologyRequest();
+  }
+  setModalVisible(false);
+};
   
   const fetchCheckpoints = async () => {
     const allCheckpoints = realmInstance.objects('Checkpoint');
@@ -227,6 +256,14 @@ const PatrolScreen = () => {
             }}>
             <Text style={styles.buttonText}>Scan QR</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.floatingButton} onPress={() => {
+            setModalVisible(true);
+            setIsMethod('NFC');
+            readNdef();
+            }}>
+            <Text style={styles.buttonText}>NFC</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -253,6 +290,28 @@ const PatrolScreen = () => {
             <Text style={styles.buttonText}>Close</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {modalVisible && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Scanning for NFC...</Text>
+            {/* {nfcTagData && (
+              // <Text style={styles.modalText}>Tag Data: {JSON.stringify(nfcTagData)}</Text>
+            )} */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       )}
 
       {previewVisible && (
@@ -282,6 +341,12 @@ const styles = StyleSheet.create({
   },
   map: { 
     flex: 1 
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
   },
   buttonContainer: {
     position: "absolute",
