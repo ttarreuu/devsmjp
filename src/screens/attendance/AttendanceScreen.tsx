@@ -348,19 +348,28 @@ const AttendanceScreen = () => {
 
 const styles = StyleSheet.create({
   body: {
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   button: {
-    height: 50,
-    width: 200,
-    backgroundColor: 'blue',
+    width: 150,  // Set button width
+    height: 150, // Set button height (same as width for a circle)
+    backgroundColor: 'green',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 5,
-    marginTop: 20,
+    borderRadius: 75, // Half of width/height to make it circular
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -75 }, { translateY: -75 }], // Center it properly
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   confirmButton: {
     height: 50,
@@ -372,11 +381,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     alignSelf: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   imagePreview: {
     width: '90%',
