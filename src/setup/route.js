@@ -10,51 +10,57 @@ import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import EmergencyScreen from '../screens/emergency/EmergencyScreen';
 import PatrolScreen from '../screens/patrol/PatrolScreen';
 import ScheduleScreen from '../screens/schedule/ScheduleScreen';
+import NfcConfirmScreen from '../screens/patrol/NfcConfirmScreen';
 
-import { getDefaultHeaderOptions } from '../components/Header'; 
+import { getDefaultHeaderOptions } from '../components/Header';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-function DashboardStack() {
+// Bottom Tab Navigator (for Dashboard, Notification, Profile only)
+function BottomTabs() {
   return (
-    <Stack.Navigator initialRouteName="Dashboard">
-      <Stack.Screen 
-        name="Dashboard" 
-        component={DashboardScreen} 
-        options={{ headerShown: false }} 
-      />
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="Notification" component={NotificationScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+// Stack Navigator (Main Navigation)
+export default function AppNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Bottom Tab Screens */}
+      <Stack.Screen name="MainTabs" component={BottomTabs} />
+
+      {/* Other Screens (No Bottom Tabs) */}
       <Stack.Screen 
         name="Attendance" 
-        component={AttendanceScreen}
-        options={getDefaultHeaderOptions('Attendance')}
+        component={AttendanceScreen} 
+        options={getDefaultHeaderOptions('Attendance')} 
       />
       <Stack.Screen 
         name="Emergency" 
         component={EmergencyScreen} 
-        options={getDefaultHeaderOptions('Emergency')}
+        options={getDefaultHeaderOptions('Emergency')} 
       />
       <Stack.Screen 
         name="Patrol" 
         component={PatrolScreen} 
-        options={getDefaultHeaderOptions('Patrol')}
+        options={getDefaultHeaderOptions('Patrol')} 
       />
       <Stack.Screen 
         name="Schedule" 
         component={ScheduleScreen} 
-        options={getDefaultHeaderOptions('Schedule')}
+        options={getDefaultHeaderOptions('Schedule')} 
+      />
+      <Stack.Screen 
+        name="NfcConfirmScreen" 
+        component={NfcConfirmScreen} 
+        options={getDefaultHeaderOptions('Patrol NFC')} 
       />
     </Stack.Navigator>
-  );
-}
-
-
-export default function BottomTabNavigator() {
-  return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="DashboardTab" component={DashboardStack} />
-      <Tab.Screen name="Notification" component={NotificationScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
   );
 }

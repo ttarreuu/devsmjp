@@ -253,6 +253,7 @@ const AttendanceScreen = () => {
             dateTime: log.dateTime,
             picture: log.picture,
             situationType: log.situationType,
+            description: log.description,
             checkpointID: log.checkpointID,
             method: log.method
           };

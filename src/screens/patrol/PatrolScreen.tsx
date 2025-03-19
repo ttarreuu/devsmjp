@@ -3,14 +3,15 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, Modal, Alert } from "r
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import ImageResizer from 'react-native-image-resizer';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import RNFS from "react-native-fs";
 import { saveLogPatrolTempLog } from "../../data/log_patrol_temp";
 import { saveLogPatrol } from "../../data/log_patrol";
 import { getAllTempLogs } from "../../data/log_tracking_temp";
 import realmInstance from "../../data/realmConfig";
 import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import { useNavigation } from '@react-navigation/native'; 
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -19,8 +20,8 @@ const PatrolScreen = () => {
   const [checkpoints, setCheckpoints] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [photoUri, setPhotoUri] = useState('');
-  const [situationType, setSituationType] = useState('');
   const [picture, setPicture] = useState('');
+  const [situationType, setSituationType] = useState('');
   const [nearestCheckpoint, setNearestCheckpoint] = useState(null);
   const [nfcTagData, setNfcTagData] = useState('');
 
@@ -51,6 +52,7 @@ const PatrolScreen = () => {
     },
   });
 
+  const navigation = useNavigation();
   useEffect(() => {
     readStatus();
     setLogData(getAllTempLogs());
@@ -78,29 +80,29 @@ const PatrolScreen = () => {
   const readNdef = async () => {
     try {
       await NfcManager.requestTechnology(NfcTech.Ndef);
-    const tag = await NfcManager.getTag();
+      const tag = await NfcManager.getTag();
 
-    if (tag?.ndefMessage) {
-      const ndefPayload = tag.ndefMessage[0].payload;
-      const decodedData = Ndef.text.decodePayload(ndefPayload);
-      console.log("NFC Data:", decodedData);
-      setNfcTagData(decodedData);
-      if (nearestCheckpoint && decodedData === nearestCheckpoint.checkpointID) {
-        setCameraVisible(true);
+      if (tag?.ndefMessage) {
+        const ndefPayload = tag.ndefMessage[0].payload;
+        const decodedData = Ndef.text.decodePayload(ndefPayload);
+        console.log("NFC Data:", decodedData);
+        setNfcTagData(decodedData);
+        if (nearestCheckpoint && decodedData === nearestCheckpoint.checkpointID) {
+          setCameraVisible(true);
+        } else {
+          Alert.alert("Data on NFC does not match. Please try again or use a valid NFC tag.");
+        }
       } else {
-        Alert.alert("Data on NFC does not match. Please try again or use a valid NFC tag.");
+        console.log("No NDEF data found");
+        Alert.alert("No data found on NFC. Please scan a valid NFC tag.");
       }
-    } else {
-      console.log("No NDEF data found");
-      Alert.alert("No data found on NFC. Please scan a valid NFC tag.");
+    } catch (ex) {
+      console.warn('Oops!', ex);
+    } finally {
+      NfcManager.cancelTechnologyRequest();
     }
-  } catch (ex) {
-    console.warn('Oops!', ex);
-  } finally {
-    NfcManager.cancelTechnologyRequest();
-  }
-  setModalVisible(false);
-};
+    setModalVisible(false);
+  };
   
   const fetchCheckpoints = async () => {
     const allCheckpoints = realmInstance.objects('Checkpoint');
@@ -258,9 +260,11 @@ const PatrolScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.floatingButton} onPress={() => {
-            setModalVisible(true);
+            navigation.navigate('NfcConfirmScreen', { nearestCheckpoint });
+            // setModalVisible(true);
             setIsMethod('NFC');
-            readNdef();
+            // readNdef();
+          
             }}>
             <Text style={styles.buttonText}>NFC</Text>
           </TouchableOpacity>

@@ -37,6 +37,7 @@ const LogPatrolSchema = {
     dateTime: 'date',
     picture: 'string',
     situationType: 'string',
+    description: 'string',
     checkpointID: 'string',
     method: 'string',
   }
@@ -50,6 +51,7 @@ const LogPatrolTempSchema = {
     dateTime: 'date',
     picture: 'string',
     situationType: 'string',
+    description: 'string',
     checkpointID: 'string',
     method: 'string',
   }

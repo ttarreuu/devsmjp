@@ -9,7 +9,7 @@ const getNextId = () => {
   return 1; 
 };
 
-export const saveLogPatrol = (dateTime, picture, situationType, checkpointID, method) => {
+export const saveLogPatrol = (dateTime, picture, situationType, description, checkpointID, method) => {
   try {
     const id = getNextId(); 
     realmInstance.write(() => {
@@ -18,11 +18,12 @@ export const saveLogPatrol = (dateTime, picture, situationType, checkpointID, me
         dateTime,
         picture,
         situationType,
+        description, 
         checkpointID,
         method,
       });
     });
-    console.log('Log saved:', { id, dateTime, checkpointID, situationType, method });
+    console.log('Log saved:', { id, dateTime, checkpointID, situationType, description, method });
   } catch (error) {
     console.error('Error saving log:', error);
   }
@@ -36,6 +37,7 @@ export const getAllLogsPatrol = () => {
       dateTime: log.dateTime,
       picture: log.picture,
       situationType: log.situationType,
+      description: log.description, 
       checkpointID: log.checkpointID,
       method: log.method
     }));
