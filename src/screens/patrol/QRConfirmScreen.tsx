@@ -13,18 +13,16 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import NFCIcon from '../../assets/nfc.svg';
 import CameraIcon from '../../assets/camera.svg';
 import Checklist from '../../assets/checklist.svg';
-import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import Tag from '../../assets/scan-tag.svg';
 import { Camera, Camera as VisionCamera, useCameraDevice } from "react-native-vision-camera";
 import RNFS from "react-native-fs";
 import ImageResizer from 'react-native-image-resizer';
 import { saveLogPatrolTempLog } from '../../data/log_patrol_temp';
 import { saveLogPatrol } from '../../data/log_patrol';
-import NFCIconGreen from '../../assets/nfc-icon-green.svg';
 
-const NfcConfirmScreen = () => {
+const QRConfirmScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { nearestCheckpoint } = route.params || {};
@@ -34,24 +32,17 @@ const NfcConfirmScreen = () => {
 
     const [selectedValue, setSelectedValue] = useState('');
     const [notes, setNotes] = useState('');
-    const [nfcTagData, setNfcTagData] = useState('');
     const [photoUri, setPhotoUri] = useState('');
     const [picture, setPicture] = useState('');
     
-    const [enable, setEnable] = useState(false);
     const [openCamera, setOpenCamera] = useState(false);
     const [preview, setPreview] = useState(false);
-    const [isSubmitEnabled, setIsSubmitEnabled] = useState(false); // State for submit button
-    const [isPhotoTaken, setIsPhotoTaken] = useState(false); // State to track if photo is taken
-
-    useEffect(() => {
-        NfcManager.start();
-        readNdef(); 
-    }, []);
+    const [isSubmitEnabled, setIsSubmitEnabled] = useState(false); 
+    const [isPhotoTaken, setIsPhotoTaken] = useState(false); 
 
     useEffect(() => {
         checkSubmitButtonState();
-    }, [enable, photoUri, notes, selectedValue]);
+    }, [photoUri, notes, selectedValue]);
 
     const takePicture = async () => {
         if (cameraRef.current) {
@@ -68,46 +59,17 @@ const NfcConfirmScreen = () => {
         }
     };
 
-    const readNdef = async () => {
-        try {
-            await NfcManager.requestTechnology(NfcTech.Ndef);
-            const tag = await NfcManager.getTag();
-
-            if (tag?.ndefMessage) {
-                const ndefPayload = tag.ndefMessage[0].payload;
-                const decodedData = Ndef.text.decodePayload(ndefPayload);
-                console.log("NFC Data:", decodedData);
-                setNfcTagData(decodedData);
-                if (nearestCheckpoint && decodedData === nearestCheckpoint.checkpointID) {
-                    setEnable(true);
-                } else {
-                    console.log("Data on NFC does not match");
-                    Alert.alert("Data on NFC does not match. Please try again or use a valid NFC tag.");
-                    navigation.goBack();
-                }
-            } else {
-                console.log("No NDEF data found");
-                Alert.alert("No data found on NFC. Please scan a valid NFC tag.");
-                navigation.goBack();
-            }
-        } catch (ex) {
-            console.warn('Oops!', ex);
-        } finally {
-            NfcManager.cancelTechnologyRequest();
-        }
-    };
-
     const checkSubmitButtonState = () => {
         // Check if all conditions are met
-        const isEnabled = enable && photoUri !== '' && notes.trim() !== '' && selectedValue !== '';
+        const isEnabled = photoUri !== '' && notes.trim() !== '' && selectedValue !== '';
         setIsSubmitEnabled(isEnabled);
     };
 
     const handleSubmit = async () => {
         try {
           const dateTime = new Date().toISOString();
-          saveLogPatrolTempLog(dateTime, picture, selectedValue, notes, nearestCheckpoint?.checkpointID, 'NFC');
-          saveLogPatrol(dateTime, picture, selectedValue, notes, nearestCheckpoint?.checkpointID, 'NFC');  
+          saveLogPatrolTempLog(dateTime, picture, selectedValue, notes, nearestCheckpoint?.checkpointID, 'QR');
+          saveLogPatrol(dateTime, picture, selectedValue, notes, nearestCheckpoint?.checkpointID, 'QR');  
           navigation.goBack();
         } catch (err) {
           console.log(err);
@@ -150,18 +112,11 @@ const NfcConfirmScreen = () => {
             )}
 
             <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-                <View style={styles.contentPreview}>
+                <View style={styles.content}>
                     <View style={styles.box}>
-                        <TouchableOpacity onPress={readNdef}>
-                            {enable ? (
-                                <NFCIconGreen width={150} height={150} /> // Use NFCIconGreen when enabled
-                            ) : (
-                                <NFCIcon width={150} height={150} /> // Use NFCIcon otherwise
-                            )}
-                        </TouchableOpacity>
-                        <Text style={[styles.nfcStatus, enable && styles.nfcStatusEnabled]}>
-                            {enable ? nearestCheckpoint.name : "Approach NFC Tag"} 
-                        </Text>
+                        <Text style={styles.location}>Location: {nearestCheckpoint.name}</Text>
+                        <Tag width={75} height={75}/>
+                        {/* <Text style={[styles.nfcStatusEnabled]}>Available to check-in</Text> */}
                     </View>
 
                     <Text style={styles.subtitle}>Status</Text>
@@ -171,7 +126,7 @@ const NfcConfirmScreen = () => {
                             style={styles.picker}
                             onValueChange={(itemValue) => {
                                 setSelectedValue(itemValue);
-                                checkSubmitButtonState(); // Check state when value changes
+                                checkSubmitButtonState(); 
                             }}
                         >
                             <Picker.Item label="" value=""/>
@@ -187,11 +142,12 @@ const NfcConfirmScreen = () => {
                         value={notes}            
                         onChangeText={(text) => {
                             setNotes(text);
-                            checkSubmitButtonState(); // Check state when notes change
+                            checkSubmitButtonState(); 
                         }}
                     />
 
-                        <TouchableOpacity style={styles.buttonOpenCamera} disabled={!enable} onPress={() => setOpenCamera(true)}>
+                    <View>
+                        <TouchableOpacity style={styles.buttonOpenCamera} onPress={() => setOpenCamera(true)}>
                             <CameraIcon height={20} width={20}/>
                             <Text style={styles.buttonTextOpenCamera}>Add Photo</Text>
                             {isPhotoTaken && (
@@ -202,7 +158,8 @@ const NfcConfirmScreen = () => {
 
                         <TouchableOpacity style={[styles.button, { backgroundColor: isSubmitEnabled ? 'blue' : 'grey' }]} disabled={!isSubmitEnabled} onPress={handleSubmit}>
                             <Text style={styles.buttonText}>Submit</Text>
-                        </TouchableOpacity>           
+                        </TouchableOpacity>
+                    </View>            
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -228,7 +185,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 5, 
-        marginTop: -50,
+        marginTop: -10,
+    }, 
+    location : {
+        fontWeight: 'bold',
+        fontSize: 14,
+        marginBottom: 10, 
     },
     nfcStatus: {
         fontSize: 12, 
@@ -237,8 +199,7 @@ const styles = StyleSheet.create({
         marginBottom: 10 
     },
     nfcStatusEnabled: {
-        color: 'black', 
-        fontWeight: 'bold'
+        color: 'green', // Change color when enabled
     },
     subtitle: {
         fontWeight: 'bold',
@@ -273,7 +234,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     buttonOpenCamera: {
-        width: '100%',
         padding: 12,
         backgroundColor: '#ffff',
         borderRadius: 8,
@@ -294,8 +254,6 @@ const styles = StyleSheet.create({
         marginLeft: 5
     },
     button: {
-        
-        width: '100%',
         padding: 12,
         borderRadius: 8,
         alignItems: 'center',
@@ -317,7 +275,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 50,
         alignSelf: 'center',
-    },
+    }, 
     confirmButton: {
         height: 50,
         width: 200,
@@ -346,4 +304,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default NfcConfirmScreen;
+export default QRConfirmScreen;

@@ -326,7 +326,7 @@ const AttendanceScreen = () => {
           />
         </View>
       ) : (
-        <View style={styles.body}>
+        <View style={styles.contentPreview}>
           {previewVisible && imageData !== '' && (
             <>
               <Image
@@ -351,20 +351,20 @@ const styles = StyleSheet.create({
   body: {
     backgroundColor: 'transparent',
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   button: {
-    width: 150,  // Set button width
-    height: 150, // Set button height (same as width for a circle)
+    width: 150,  
+    height: 150, 
     backgroundColor: 'green',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 75, // Half of width/height to make it circular
+    borderRadius: 75, 
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -75 }, { translateY: -75 }], // Center it properly
+    transform: [{ translateX: -75 }, { translateY: -75 }], 
   },
   buttonText: {
     color: 'white',
@@ -372,22 +372,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  confirmButton: {
-    height: 50,
-    width: 200,
-    backgroundColor: 'green',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-  },
-  imagePreview: {
-    width: '90%',
-    height: 200,
-    marginBottom: 20,
-  },
+    confirmButton: {
+        height: 50,
+        width: 200,
+        backgroundColor: 'green',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5,
+        position: 'absolute',
+        bottom: -20,
+        alignSelf: 'center',
+        marginTop: 20
+    },
+    contentPreview: {
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        marginVertical: 40,
+        marginBottom: 100,
+        height: '80%',
+        width: '100%',
+    },
+    imagePreview: {
+        width: '85%',
+        height: '75%',
+        marginTop: 60,
+        borderRadius: 10,
+    },
   captureButton: {
     width: 60,
     height: 60,

@@ -1,17 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Image, Modal, Alert } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
-import ImageResizer from 'react-native-image-resizer';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import RNFS from "react-native-fs";
-import { saveLogPatrolTempLog } from "../../data/log_patrol_temp";
-import { saveLogPatrol } from "../../data/log_patrol";
 import { getAllTempLogs } from "../../data/log_tracking_temp";
 import realmInstance from "../../data/realmConfig";
-import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { useNavigation } from '@react-navigation/native'; 
+import GPSIcon from '../../assets/gps-icon.svg';
+import QRIcon from '../../assets/qrcode-icon.svg';
+import NFCIcon from '../../assets/nfc-icon.svg';
+import LogIcon from '../../assets/log-icon.svg';
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -19,51 +18,39 @@ const PatrolScreen = () => {
   const [logData, setLogData] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [photoUri, setPhotoUri] = useState('');
-  const [picture, setPicture] = useState('');
-  const [situationType, setSituationType] = useState('');
   const [nearestCheckpoint, setNearestCheckpoint] = useState(null);
-  const [nfcTagData, setNfcTagData] = useState('');
-
-  const [cameraVisible, setCameraVisible] = useState(false);
   const [cameraQRVisible, setCameraQRVisible] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
-  const [isMethod, setIsMethod] = useState('');
-  const [qrCode, setQrCode] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isEnable, setIsEnable] = useState(false); // Add this state
 
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
+  const navigation = useNavigation();
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: (codes) => {
       const scannedCode = codes[0]?.value;
       if (scannedCode) {
-        setQrCode(scannedCode);
         setCameraQRVisible(false);  
         console.log(`Scanned QR Code: ${scannedCode}`);
         if (nearestCheckpoint && scannedCode === nearestCheckpoint.checkpointID) {
-            setCameraVisible(true);
+          navigation.navigate('QRConfirmScreen', { nearestCheckpoint });
         } 
       }
     },
   });
 
-  const navigation = useNavigation();
   useEffect(() => {
     readStatus();
     setLogData(getAllTempLogs());
-    NfcManager.start();
     fetchCheckpoints();    
     const watchId = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setCurrentLocation({ latitude, longitude });
         if (isAttendance) {
-          setSituationType('');
           checkProximity(latitude, longitude);
         }
       },
@@ -74,36 +61,13 @@ const PatrolScreen = () => {
     return () => {
       if (watchId) Geolocation.clearWatch(watchId);
     };
-  }, [currentLocation]);
+  }, [isAttendance]);
 
+  useEffect(() => {
+    const enable = isAttendance && isCheckIn && currentLocation && nearestCheckpoint;
+    setIsEnable(enable);
+  }, [isAttendance, isCheckIn, currentLocation, nearestCheckpoint]);
 
-  const readNdef = async () => {
-    try {
-      await NfcManager.requestTechnology(NfcTech.Ndef);
-      const tag = await NfcManager.getTag();
-
-      if (tag?.ndefMessage) {
-        const ndefPayload = tag.ndefMessage[0].payload;
-        const decodedData = Ndef.text.decodePayload(ndefPayload);
-        console.log("NFC Data:", decodedData);
-        setNfcTagData(decodedData);
-        if (nearestCheckpoint && decodedData === nearestCheckpoint.checkpointID) {
-          setCameraVisible(true);
-        } else {
-          Alert.alert("Data on NFC does not match. Please try again or use a valid NFC tag.");
-        }
-      } else {
-        console.log("No NDEF data found");
-        Alert.alert("No data found on NFC. Please scan a valid NFC tag.");
-      }
-    } catch (ex) {
-      console.warn('Oops!', ex);
-    } finally {
-      NfcManager.cancelTechnologyRequest();
-    }
-    setModalVisible(false);
-  };
-  
   const fetchCheckpoints = async () => {
     const allCheckpoints = realmInstance.objects('Checkpoint');
     setCheckpoints(allCheckpoints);
@@ -126,7 +90,7 @@ const PatrolScreen = () => {
       }
     });
 
-    if (nearest !== '') {
+    if (nearest) { // Check if nearest is not null
       setNearestCheckpoint(nearest);
       setIsCheckIn(true);
     } else {
@@ -136,7 +100,7 @@ const PatrolScreen = () => {
   };
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371000;
+    const R = 6371000; // Radius of the Earth in meters
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -144,32 +108,6 @@ const PatrolScreen = () => {
       Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-
-  const takePicture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePhoto();
-      setPhotoUri(photo.path);
-
-      const compressedImage = await ImageResizer.createResizedImage(photo.path, 800, 600, 'JPEG', 50, 0);
-      const base64Image = await RNFS.readFile(compressedImage.uri, 'base64');
-      setPicture(base64Image);
-
-      setCameraVisible(false);
-      setPreviewVisible(true);
-    }
-  };
-
-  const handleConfirm = async () => {
-    try {
-      const dateTime = new Date().toISOString();
-      saveLogPatrolTempLog(dateTime, picture, situationType, nearestCheckpoint?.checkpointID, isMethod);
-      saveLogPatrol(dateTime, picture, situationType, nearestCheckpoint?.checkpointID, isMethod);
-      setIsCheckIn(false);
-      setPreviewVisible(false);
-    } catch (err) {
-      console.log(err);
-    }
   };
 
   const getGeoJSONLine = () => ({
@@ -185,8 +123,8 @@ const PatrolScreen = () => {
       <MapView style={styles.map} styleURL={Mapbox.StyleURL.Street}>
         {currentLocation && (
           <Camera
-            zoomLevel={19}
-            centerCoordinate={[currentLocation.longitude, currentLocation.latitude]}
+            zoomLevel={17}
+            centerCoordinate={[106.823412, -6.191564]}
           />
         )}
 
@@ -209,13 +147,13 @@ const PatrolScreen = () => {
 
         {/* Checkpoint markers */}
         {checkpoints.map((checkpoint) => (
-          <><PointAnnotation
+          <PointAnnotation
             key={checkpoint.checkpointID}
             id={checkpoint.checkpointID}
             coordinate={[checkpoint.longitude, checkpoint.latitude]}
           >
             <View style={styles.checkpoint} />
-          </PointAnnotation></>
+          </PointAnnotation>
         ))}
 
         {/* Directions from current location to the nearest checkpoint */}
@@ -241,42 +179,51 @@ const PatrolScreen = () => {
         )}
       </MapView>
 
-      {isAttendance && isCheckIn && !previewVisible && currentLocation && nearestCheckpoint && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.floatingButton} 
-            onPress={() => {
-            setCameraVisible(true);
-            setIsMethod('GPS');
-            }}>
-            <Text style={styles.buttonText}>Check-in</Text>
-          </TouchableOpacity>
+      <Text style={styles.title}>Patrol Mode</Text>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.floatingButton}
+          onPress={() => {
+            if (isEnable) {
+              navigation.navigate('ConfirmScreen', { nearestCheckpoint });
+            }
+          }}>
+          <GPSIcon height={50} width={50}/>
+          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>Check-in</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.floatingButton} onPress={() => {
-            setCameraQRVisible(true);
-            setIsMethod('QR');
-            }}>
-            <Text style={styles.buttonText}>Scan QR</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.floatingButton} 
+          onPress={() => {
+            if (isEnable) {
+              navigation.navigate('NfcConfirmScreen', { nearestCheckpoint });
+            }
+          }}>
+          <NFCIcon height={50} width={50}/>
+          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>NFC</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.floatingButton} onPress={() => {
-            navigation.navigate('NfcConfirmScreen', { nearestCheckpoint });
-            // setModalVisible(true);
-            setIsMethod('NFC');
-            // readNdef();
-          
-            }}>
-            <Text style={styles.buttonText}>NFC</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        <TouchableOpacity 
+          style={styles.floatingButton} 
+          onPress={() => {
+            if (isEnable) {
+              setCameraQRVisible(true);
+            }
+          }}>
+          <QRIcon height={50} width={50}/>
+          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>Scan QR</Text>
+        </TouchableOpacity>
 
-      {cameraVisible && device && (
-        <>
-          <VisionCamera ref={cameraRef} style={styles.camera} device={device} isActive={true} photo={true} />
-          <TouchableOpacity style={styles.captureButton} onPress={takePicture} />
-        </>
-      )}
+
+        <TouchableOpacity 
+          style={styles.floatingButton} 
+          onPress={() => {
+            // Add your log navigation logic here
+          }}>
+          <LogIcon height={50} width={50}/>
+          <Text style={styles.buttonText}>Log</Text>
+        </TouchableOpacity>
+      </View>
 
       {cameraQRVisible && device && (
         <View style={styles.cameraContainer}>
@@ -289,49 +236,11 @@ const PatrolScreen = () => {
           />
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setCameraQRVisible(false)}
+            onPress={() => {
+              setCameraQRVisible(false);
+            }}
           >
             <Text style={styles.buttonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {modalVisible && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Scanning for NFC...</Text>
-            {/* {nfcTagData && (
-              // <Text style={styles.modalText}>Tag Data: {JSON.stringify(nfcTagData)}</Text>
-            )} */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-      )}
-
-      {previewVisible && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: photoUri }} style={styles.imagePreview} />
-          <Text style={styles.modalText}>Pilih Situasi:</Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.optionButton, situationType === "aman" && styles.selected]} onPress={() => setSituationType("aman")}>
-              <Text style={styles.buttonText}>Aman</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.optionButton, situationType === "tidak aman" && styles.selected]} onPress={() => setSituationType("tidak aman")}>
-              <Text style={styles.buttonText}>Tidak Aman</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-            <Text style={styles.buttonText}>Confirm</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -341,117 +250,76 @@ const PatrolScreen = () => {
 
 const styles = StyleSheet.create({
   page: { 
-    flex: 1 
+    flex: 1,
+    backgroundColor: '#ffff',
   },
   map: { 
-    flex: 1 
+    height: '75%' 
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  title: {
+    marginVertical: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#1185C8',
+    fontSize: 16,
   },
   buttonContainer: {
-    position: "absolute",
-    bottom: 30,
-    right: 20,
-    flexDirection: "row",
-    alignItems: "center",
+    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
   },
   floatingButton: { 
-    backgroundColor: "blue", 
-    padding: 15, 
-    borderRadius: 10, 
     marginHorizontal: 5 
   },
   buttonText: { 
-    color: "white", 
-    fontSize: 16, 
-    textAlign: "center" 
+    color: '#1185C8', 
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  disabledText: {
+    color: 'grey', 
+    textAlign: 'center'
   },
   camera: { 
-    width: "100%", 
-    height: "100%" 
-  },
-  previewContainer: { 
-    position: "absolute", 
-    bottom: 100, 
-    alignSelf: "center" 
-  },
-  imagePreview: { 
-    width: 200, 
-    height: 200, 
-    marginBottom: 10 
-  },
-  confirmButton: { 
-    backgroundColor: "green", 
-    padding: 10, 
-    borderRadius: 5 
-  },
-  captureButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
-  },
-  modalText: { 
-    fontSize: 18, 
-    marginBottom: 10 
-  },
-  optionButton: { 
-    backgroundColor: "gray", 
-    padding: 10, 
-    borderRadius: 5, 
-    marginHorizontal: 5 
-  },
-  selected: { 
-    backgroundColor: "green" 
+    width: '100%', 
+    height: '100%' 
   },
   lineLayer: {
-    lineColor: "#FF0000", // Log path color
+    lineColor: '#FF0000', // Log path color
     lineWidth: 3,
   },
   point: {
     height: 20,
     width: 20,
-    backgroundColor: "blue",
+    backgroundColor: 'blue',
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "white",
+    borderColor: 'white',
   },
   routeLineLayer: {
-    lineColor: "#00FF00", // Direction line color
+    lineColor: '#00FF00', // Direction line color
     lineWidth: 2,
     lineDasharray: [2, 2], // Dashed line
   },
   cameraContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "black",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'black',
   },
   closeButton: {
-    position: "absolute",
+    position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: "red",
+    backgroundColor: 'red',
     padding: 10,
     borderRadius: 5,
-  },
-  checkpointName: {
-    marginTop: 5, // Space between the point and the name
-    fontSize: 12, // Adjust font size as needed
-    color: 'black', // Change color as needed
-    textAlign: 'center', // Center the text
-  },
+  }
 });
 
 export default PatrolScreen;

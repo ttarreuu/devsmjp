@@ -11,8 +11,10 @@ import EmergencyScreen from '../screens/emergency/EmergencyScreen';
 import PatrolScreen from '../screens/patrol/PatrolScreen';
 import ScheduleScreen from '../screens/schedule/ScheduleScreen';
 import NfcConfirmScreen from '../screens/patrol/NfcConfirmScreen';
+import ConfirmScreen from '../screens/patrol/ConfirmScreen';
 
 import { getDefaultHeaderOptions } from '../components/Header';
+import QRConfirmScreen from '../screens/patrol/QRConfirmScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -60,6 +62,16 @@ export default function AppNavigator() {
         name="NfcConfirmScreen" 
         component={NfcConfirmScreen} 
         options={getDefaultHeaderOptions('Patrol NFC')} 
+      />
+      <Stack.Screen 
+        name="ConfirmScreen" 
+        component={ConfirmScreen} 
+        options={getDefaultHeaderOptions('Patrol GPS')} 
+      />
+      <Stack.Screen 
+        name="QRConfirmScreen" 
+        component={QRConfirmScreen} 
+        options={getDefaultHeaderOptions('Patrol QR')} 
       />
     </Stack.Navigator>
   );
