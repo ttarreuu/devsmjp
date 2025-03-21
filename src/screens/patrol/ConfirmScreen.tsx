@@ -7,8 +7,7 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView, 
   ScrollView, 
-  Platform, 
-  Alert,
+  Platform,
   Image
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -16,7 +15,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import CameraIcon from '../../assets/camera.svg';
 import Checklist from '../../assets/checklist.svg';
 import Tag from '../../assets/location-tag.svg';
-import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { Camera, Camera as VisionCamera, useCameraDevice } from "react-native-vision-camera";
 import RNFS from "react-native-fs";
 import ImageResizer from 'react-native-image-resizer';
@@ -56,12 +54,11 @@ const ConfirmScreen = () => {
     
             setOpenCamera(false); 
             setPreview(true);
-            setIsPhotoTaken(true); // Mark photo as taken
+            setIsPhotoTaken(true); 
         }
     };
 
     const checkSubmitButtonState = () => {
-        // Check if all conditions are met
         const isEnabled = photoUri !== '' && notes.trim() !== '' && selectedValue !== '';
         setIsSubmitEnabled(isEnabled);
     };
@@ -143,7 +140,7 @@ const ConfirmScreen = () => {
                         value={notes}            
                         onChangeText={(text) => {
                             setNotes(text);
-                            checkSubmitButtonState(); // Check state when notes change
+                            checkSubmitButtonState(); 
                         }}
                     />
 
@@ -201,7 +198,7 @@ const styles = StyleSheet.create({
         marginBottom: 10 
     },
     nfcStatusEnabled: {
-        color: 'green', // Change color when enabled
+        color: 'green',
     },
     subtitle: {
         fontWeight: 'bold',

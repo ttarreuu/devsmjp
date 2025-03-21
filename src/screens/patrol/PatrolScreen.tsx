@@ -100,7 +100,7 @@ const PatrolScreen = () => {
   };
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371000; // Radius of the Earth in meters
+    const R = 6371000; 
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -128,14 +128,12 @@ const PatrolScreen = () => {
           />
         )}
 
-        {/* Line marker for logData path */}
         {logData.length > 1 && (
           <ShapeSource id="lineSource" shape={getGeoJSONLine()}>
             <LineLayer id="lineLayer" style={styles.lineLayer} />
           </ShapeSource>
         )}
 
-        {/* Current location marker */}
         {currentLocation && (
           <PointAnnotation
             id="currentLocation"
@@ -145,7 +143,6 @@ const PatrolScreen = () => {
           </PointAnnotation>
         )}
 
-        {/* Checkpoint markers */}
         {checkpoints.map((checkpoint) => (
           <PointAnnotation
             key={checkpoint.checkpointID}
@@ -156,7 +153,6 @@ const PatrolScreen = () => {
           </PointAnnotation>
         ))}
 
-        {/* Directions from current location to the nearest checkpoint */}
         {currentLocation && nearestCheckpoint && (
           <ShapeSource
             id={`route-${nearestCheckpoint.checkpointID}`}
@@ -218,7 +214,7 @@ const PatrolScreen = () => {
         <TouchableOpacity 
           style={styles.floatingButton} 
           onPress={() => {
-            // Add your log navigation logic here
+            // navigate to log page
           }}>
           <LogIcon height={50} width={50}/>
           <Text style={styles.buttonText}>Log</Text>
@@ -286,7 +282,7 @@ const styles = StyleSheet.create({
     height: '100%' 
   },
   lineLayer: {
-    lineColor: '#FF0000', // Log path color
+    lineColor: '#FF0000', 
     lineWidth: 3,
   },
   point: {
@@ -298,9 +294,9 @@ const styles = StyleSheet.create({
     borderColor: 'white',
   },
   routeLineLayer: {
-    lineColor: '#00FF00', // Direction line color
+    lineColor: '#00FF00', 
     lineWidth: 2,
-    lineDasharray: [2, 2], // Dashed line
+    lineDasharray: [2, 2], 
   },
   cameraContainer: {
     position: 'absolute',

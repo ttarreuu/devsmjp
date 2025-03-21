@@ -3,14 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native
 import { menuData } from '../data/menu_data';
 
 export default function DashboardScreen({ navigation }) {
-  const renderMenuItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate(item.route)}
-    >
-      <Text style={styles.cardText}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+  const renderMenuItem = ({ item }) => {
+    const IconComponent = item.icon;
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate(item.route)}
+      >
+        <IconComponent width={50} height={50} />
+        <Text style={styles.cardText}>{item.name}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -44,7 +49,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   cardText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    marginTop: 10,
   },
 });

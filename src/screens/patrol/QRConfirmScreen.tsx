@@ -55,12 +55,11 @@ const QRConfirmScreen = () => {
     
             setOpenCamera(false); 
             setPreview(true);
-            setIsPhotoTaken(true); // Mark photo as taken
+            setIsPhotoTaken(true); 
         }
     };
 
     const checkSubmitButtonState = () => {
-        // Check if all conditions are met
         const isEnabled = photoUri !== '' && notes.trim() !== '' && selectedValue !== '';
         setIsSubmitEnabled(isEnabled);
     };
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
         marginBottom: 10 
     },
     nfcStatusEnabled: {
-        color: 'green', // Change color when enabled
+        color: 'green', 
     },
     subtitle: {
         fontWeight: 'bold',

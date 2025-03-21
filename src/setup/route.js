@@ -16,28 +16,57 @@ import ConfirmScreen from '../screens/patrol/ConfirmScreen';
 import { getDefaultHeaderOptions } from '../components/Header';
 import QRConfirmScreen from '../screens/patrol/QRConfirmScreen';
 
+import DashboardIcon from '../assets/home.svg';
+import NotificationIcon from '../assets/notification.svg';
+import ProfileIcon from '../assets/profile.svg';
+import DashboardIconBlue from '../assets/home-blue.svg';
+import NotificationIconBlue from '../assets/notification-blue.svg';
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Bottom Tab Navigator (for Dashboard, Notification, Profile only)
 function BottomTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Notification" component={NotificationScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Navigator screenOptions={{ 
+        headerShown: false, 
+        tabBarActiveTintColor: "#1185C8", // Active tab text color
+      }}>
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen} 
+        options={{
+          tabBarIcon: ({ focused, size }) => (
+            focused ? <DashboardIconBlue width={size} height={size} /> : <DashboardIcon width={size} height={size} />
+          ),
+        }} 
+      />
+      <Tab.Screen 
+        name="Notification" 
+        component={NotificationScreen} 
+        options={{
+          tabBarIcon: ({ focused, size }) => (
+            focused ? <NotificationIconBlue width={size*1.3} height={size*1.3} /> : <NotificationIcon width={size*1.3} height={size*1.3} />
+          ),
+        }} 
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{
+          tabBarIcon: ({ size }) => (
+            <ProfileIcon width={size} height={size} />
+          ),
+        }} 
+      />
     </Tab.Navigator>
   );
 }
 
-// Stack Navigator (Main Navigation)
+
 export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Bottom Tab Screens */}
       <Stack.Screen name="MainTabs" component={BottomTabs} />
-
-      {/* Other Screens (No Bottom Tabs) */}
       <Stack.Screen 
         name="Attendance" 
         component={AttendanceScreen} 

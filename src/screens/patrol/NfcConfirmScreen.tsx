@@ -41,8 +41,8 @@ const NfcConfirmScreen = () => {
     const [enable, setEnable] = useState(false);
     const [openCamera, setOpenCamera] = useState(false);
     const [preview, setPreview] = useState(false);
-    const [isSubmitEnabled, setIsSubmitEnabled] = useState(false); // State for submit button
-    const [isPhotoTaken, setIsPhotoTaken] = useState(false); // State to track if photo is taken
+    const [isSubmitEnabled, setIsSubmitEnabled] = useState(false); 
+    const [isPhotoTaken, setIsPhotoTaken] = useState(false); 
 
     useEffect(() => {
         NfcManager.start();
@@ -64,7 +64,7 @@ const NfcConfirmScreen = () => {
     
             setOpenCamera(false); 
             setPreview(true);
-            setIsPhotoTaken(true); // Mark photo as taken
+            setIsPhotoTaken(true); 
         }
     };
 
@@ -154,9 +154,9 @@ const NfcConfirmScreen = () => {
                     <View style={styles.box}>
                         <TouchableOpacity onPress={readNdef}>
                             {enable ? (
-                                <NFCIconGreen width={150} height={150} /> // Use NFCIconGreen when enabled
+                                <NFCIconGreen width={150} height={150} /> 
                             ) : (
-                                <NFCIcon width={150} height={150} /> // Use NFCIcon otherwise
+                                <NFCIcon width={150} height={150} />
                             )}
                         </TouchableOpacity>
                         <Text style={[styles.nfcStatus, enable && styles.nfcStatusEnabled]}>
@@ -171,7 +171,7 @@ const NfcConfirmScreen = () => {
                             style={styles.picker}
                             onValueChange={(itemValue) => {
                                 setSelectedValue(itemValue);
-                                checkSubmitButtonState(); // Check state when value changes
+                                checkSubmitButtonState(); 
                             }}
                         >
                             <Picker.Item label="" value=""/>
@@ -187,7 +187,7 @@ const NfcConfirmScreen = () => {
                         value={notes}            
                         onChangeText={(text) => {
                             setNotes(text);
-                            checkSubmitButtonState(); // Check state when notes change
+                            checkSubmitButtonState(); 
                         }}
                     />
 

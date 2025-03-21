@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Button, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Geolocation from 'react-native-geolocation-service'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Camera, useCameraDevice, useCameraDevices } from 'react-native-vision-camera';
@@ -14,7 +14,7 @@ import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
 import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
 
 
-import { deleteAllTempPatrolLogs, deleteLogPatrolTempLogById, getAllLogPatrolTempLogs } from '../../data/log_patrol_temp';
+import { deleteAllTempPatrolLogs } from '../../data/log_patrol_temp';
 import { getAllLogsPatrol, deleteAllLogsPatrol, deleteLogPatrolById } from '../../data/log_patrol';
 import { fetchData } from '../../data/checkpoint_data';
 import realmInstance from '../../data/realmConfig';
@@ -76,11 +76,6 @@ const AttendanceScreen = () => {
   };
   
   const toggleTracking = () => {
-    // if (isAttendance) {
-    //   setEndDateTime(new Date().toISOString());
-    // } else {
-    //   setStartDateTime(new Date().toISOString());
-    // }
     setIsHide(true);
     setCameraVisible(true);
   };
@@ -119,12 +114,12 @@ const AttendanceScreen = () => {
   
   const handleConfirm = async () => {
     try {
-      const currentDateTime = new Date().toISOString(); // Get current timestamp
+      const currentDateTime = new Date().toISOString();
 
       if (isAttendance) {
-        setEndDateTime(currentDateTime); // Set end time when stopping
+        setEndDateTime(currentDateTime); 
       } else {
-        setStartDateTime(currentDateTime); // Set start time when starting
+        setStartDateTime(currentDateTime); 
       }
 
       const attendanceID = await AsyncStorage.getItem('attendanceID');

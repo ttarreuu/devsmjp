@@ -1,6 +1,11 @@
+import AttendanceIcon from '../assets/attendance.svg';
+import EmergencyIcon from '../assets/contact.svg';
+import PatrolIcon from '../assets/patrol.svg';
+import ScheduleIcon from '../assets/schedule.svg';
+
 export const menuData = [
-  { name: "Attendance", route: "Attendance" },
-  { name: "Emergency", route: "Emergency" },
-  { name: "Patrol", route: "Patrol" },
-  { name: "Schedule", route: "Schedule" },
+  { name: "Attendance", route: "Attendance", icon: AttendanceIcon },
+  { name: "Emergency", route: "Emergency", icon: EmergencyIcon },
+  { name: "Patrol", route: "Patrol", icon: PatrolIcon },
+  { name: "Schedule", route: "Schedule", icon: ScheduleIcon },
 ];
