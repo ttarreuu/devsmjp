@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    fontWeight: 'bold',
     marginTop: 10,
+    fontFamily: 'Poppins-SemiBold',
   },
 });

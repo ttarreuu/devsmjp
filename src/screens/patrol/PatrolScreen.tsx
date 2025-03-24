@@ -185,7 +185,7 @@ const PatrolScreen = () => {
             }
           }}>
           <GPSIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>Check-in</Text>
+          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>GPS</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -207,7 +207,7 @@ const PatrolScreen = () => {
             }
           }}>
           <QRIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>Scan QR</Text>
+          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>QR Code</Text>
         </TouchableOpacity>
 
 
@@ -217,7 +217,7 @@ const PatrolScreen = () => {
             // navigate to log page
           }}>
           <LogIcon height={50} width={50}/>
-          <Text style={styles.buttonText}>Log</Text>
+          <Text style={[styles.buttonText, !isAttendance && styles.disabledText]}>Log</Text>
         </TouchableOpacity>
       </View>
 
@@ -255,7 +255,8 @@ const styles = StyleSheet.create({
   title: {
     marginVertical: 15,
     textAlign: 'center',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     color: '#1185C8',
     fontSize: 16,
   },
@@ -272,6 +273,7 @@ const styles = StyleSheet.create({
     color: '#1185C8', 
     fontSize: 12,
     textAlign: 'center',
+    fontFamily: 'Poppins-Medium'
   },
   disabledText: {
     color: 'grey', 

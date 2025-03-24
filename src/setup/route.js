@@ -29,7 +29,9 @@ function BottomTabs() {
   return (
     <Tab.Navigator screenOptions={{ 
         headerShown: false, 
-        tabBarActiveTintColor: "#1185C8", // Active tab text color
+        tabBarActiveTintColor: "#1185C8",
+        tabBarLabelStyle: { fontFamily: 'Poppins-SemiBold' },
+        tabBarShowLabel: false
       }}>
       <Tab.Screen 
         name="Dashboard" 

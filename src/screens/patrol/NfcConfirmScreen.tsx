@@ -232,16 +232,18 @@ const styles = StyleSheet.create({
     },
     nfcStatus: {
         fontSize: 12, 
+        fontFamily: 'Poppins-Regular',
         color: 'red',
         marginTop: -20,
         marginBottom: 10 
     },
     nfcStatusEnabled: {
         color: 'black', 
-        fontWeight: 'bold'
+        // fontWeight: 'bold'
+        fontFamily: 'Poppins-Bold'
     },
     subtitle: {
-        fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold',
         color: '#6A6A6A',
         marginTop: 10,
     },
@@ -260,7 +262,8 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     option: {
-        fontSize: 14
+        fontSize: 14,
+        fontFamily: 'Poppins-Regular'
     },
     textInput: {
         width: '100%',
@@ -288,7 +291,8 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         color: 'black',
         fontSize: 14,
-        fontWeight: 'bold'
+        // fontWeight: 'bold'
+        fontFamily: 'Poppins-Bold'
     },
     checklist: {
         marginLeft: 5
@@ -303,7 +307,8 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 14,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold'
     },
     camera: { 
         width: "100%", 

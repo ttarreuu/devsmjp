@@ -113,7 +113,7 @@ const ConfirmScreen = () => {
                 <View style={styles.content}>
                     <View style={styles.box}>
                         <Text style={styles.location}>Location: {nearestCheckpoint.name}</Text>
-                        <Tag width={75} height={75}/>
+                        <Tag width={75} height={75} />
                         {/* <Text style={[styles.nfcStatusEnabled]}>Available to check-in</Text> */}
                     </View>
 
@@ -187,7 +187,8 @@ const styles = StyleSheet.create({
         paddingVertical: 15
     },
     location : {
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold',
         fontSize: 14,
         marginBottom: 10, 
     },
@@ -195,13 +196,15 @@ const styles = StyleSheet.create({
         fontSize: 12, 
         color: 'red',
         marginTop: -20,
-        marginBottom: 10 
+        marginBottom: 10 ,
+        fontFamily: 'Poppins-Regular'
     },
     nfcStatusEnabled: {
         color: 'green',
     },
     subtitle: {
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold',
         color: '#6A6A6A',
         marginTop: 10,
     },
@@ -220,7 +223,8 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     option: {
-        fontSize: 14
+        fontSize: 14,
+        fontFamily: 'Poppins-Regular'
     },
     textInput: {
         width: '100%',
@@ -247,7 +251,8 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         color: 'black',
         fontSize: 14,
-        fontWeight: 'bold'
+        // fontWeight: 'bold'
+        fontFamily: 'Poppins-Bold'
     },
     checklist: {
         marginLeft: 5
@@ -260,7 +265,8 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 14,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold'
     },
     camera: { 
         width: "100%", 
