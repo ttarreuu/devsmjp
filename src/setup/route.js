@@ -6,6 +6,10 @@ import DashboardScreen from '../screens/DashboardScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
+import ForgotPwScreen from '../screens/ForgotPwScreen.tsx';
+import UpdatePwScreen from '../screens/UpdatePwScreen.tsx';
+import LoginScreen from '../screens/LoginScreen.tsx';
+
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import EmergencyScreen from '../screens/emergency/EmergencyScreen';
 import PatrolScreen from '../screens/patrol/PatrolScreen';
@@ -29,7 +33,7 @@ function BottomTabs() {
   return (
     <Tab.Navigator screenOptions={{ 
         headerShown: false, 
-        tabBarActiveTintColor: "#1185C8",
+        tabBarActiveTintColor: '#1185C8',
         tabBarLabelStyle: { fontFamily: 'Poppins-SemiBold' },
         tabBarShowLabel: false
       }}>
@@ -64,46 +68,22 @@ function BottomTabs() {
   );
 }
 
-
 export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPwScreen} options={getDefaultHeaderOptions('Forgot Password')} />
+      <Stack.Screen name="UpdatePassword" component={UpdatePwScreen} options={getDefaultHeaderOptions('Update Password')} />
+
       <Stack.Screen name="MainTabs" component={BottomTabs} />
-      <Stack.Screen 
-        name="Attendance" 
-        component={AttendanceScreen} 
-        options={getDefaultHeaderOptions('Attendance')} 
-      />
-      <Stack.Screen 
-        name="Emergency" 
-        component={EmergencyScreen} 
-        options={getDefaultHeaderOptions('Emergency')} 
-      />
-      <Stack.Screen 
-        name="Patrol" 
-        component={PatrolScreen} 
-        options={getDefaultHeaderOptions('Patrol')} 
-      />
-      <Stack.Screen 
-        name="Schedule" 
-        component={ScheduleScreen} 
-        options={getDefaultHeaderOptions('Schedule')} 
-      />
-      <Stack.Screen 
-        name="NfcConfirmScreen" 
-        component={NfcConfirmScreen} 
-        options={getDefaultHeaderOptions('Patrol NFC')} 
-      />
-      <Stack.Screen 
-        name="ConfirmScreen" 
-        component={ConfirmScreen} 
-        options={getDefaultHeaderOptions('Patrol GPS')} 
-      />
-      <Stack.Screen 
-        name="QRConfirmScreen" 
-        component={QRConfirmScreen} 
-        options={getDefaultHeaderOptions('Patrol QR')} 
-      />
+
+      <Stack.Screen name="Attendance" component={AttendanceScreen} options={getDefaultHeaderOptions('Attendance')} />
+      <Stack.Screen name="Emergency" component={EmergencyScreen} options={getDefaultHeaderOptions('Emergency')} />
+      <Stack.Screen name="Patrol" component={PatrolScreen} options={getDefaultHeaderOptions('Patrol')} />
+      <Stack.Screen name="Schedule" component={ScheduleScreen} options={getDefaultHeaderOptions('Schedule')} />
+      <Stack.Screen name="NfcConfirmScreen" component={NfcConfirmScreen} options={getDefaultHeaderOptions('Patrol NFC')} />
+      <Stack.Screen name="ConfirmScreen" component={ConfirmScreen} options={getDefaultHeaderOptions('Patrol GPS')} />
+      <Stack.Screen name="QRConfirmScreen" component={QRConfirmScreen} options={getDefaultHeaderOptions('Patrol QR')} />
     </Stack.Navigator>
   );
 }

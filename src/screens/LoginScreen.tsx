@@ -1,22 +1,50 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform, Alert } from 'react-native';
 import PersonIcon from '../assets/person-login.svg';
 import FingerPrintIcon from '../assets/finger-print.svg';
 import UserIcon from '../assets/user-icon.svg';
 import PwIcon from '../assets/pw-icon.svg';
 import HiddenPwIcon from '../assets/hidden-pw.svg';
 import UnhidePwIcon from '../assets/unhide-pw.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function NotificationScreen() {
+export default function LoginScreen() {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+    const storedUser = await AsyncStorage.getItem('user');
+        if (storedUser) {
+            navigation.navigate('MainTabs');
+        }
+    };
+    checkLoginStatus();
+  }, []);
 
-  const handleLogin = () => {
-    console.log('Logging in with:', username, password);
-  };
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
+      const users = await response.json();
+
+      const foundUser = users.find((user: { name: string; password: string; }) => user.name === username && user.password === password);
+
+      if (foundUser) {
+        console.log('Login Successful:', foundUser);
+        
+        await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Login Failed', 'Invalid username or password!');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      Alert.alert('Error', 'Failed to connect to the server. Please try again.');
+    }
+};
 
   return (
     <KeyboardAvoidingView
@@ -76,7 +104,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginTop: -50,
+    // marginTop: -50,
   },
   scrollContainer: {
     alignItems: 'center',
