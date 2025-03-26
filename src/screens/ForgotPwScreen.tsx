@@ -46,7 +46,7 @@ export default function ForgotPwScreen() {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity style={styles.button}  onPress={() => navigation.navigate('UpdatePwScreen')}>
+        <TouchableOpacity style={styles.button}  onPress={() => navigation.navigate('UpdatePassword')}>
           <Text style={styles.textButton}>Reset Password</Text>
         </TouchableOpacity>
       

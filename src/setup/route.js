@@ -72,8 +72,8 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPwScreen} options={getDefaultHeaderOptions('Forgot Password')} />
-      <Stack.Screen name="UpdatePassword" component={UpdatePwScreen} options={getDefaultHeaderOptions('Update Password')} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPwScreen} options={getDefaultHeaderOptions('')} />
+      <Stack.Screen name="UpdatePassword" component={UpdatePwScreen} options={getDefaultHeaderOptions('')} />
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
 
