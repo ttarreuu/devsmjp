@@ -8,6 +8,7 @@ import PwIcon from '../assets/pw-icon.svg';
 import HiddenPwIcon from '../assets/hidden-pw.svg';
 import UnhidePwIcon from '../assets/unhide-pw.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData } from '../data/emergency_contact';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -24,6 +25,23 @@ export default function LoginScreen() {
     checkLoginStatus();
   }, []);
 
+  const fetchAndSaveContacts = async () => {
+    try {
+      const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/Contact');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const contacts = await response.json();
+
+      contacts.forEach(contact => {
+        saveData(contact.name, contact.number); // Save each contact to Realm
+      });
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      Alert.alert('Error', 'Failed to fetch emergency contacts.');
+    }
+  };
+
   const handleLogin = async () => {
     try {
       const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
@@ -35,6 +53,7 @@ export default function LoginScreen() {
         console.log('Login Successful:', foundUser);
         
         await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+        await fetchAndSaveContacts();
 
         navigation.navigate('MainTabs');
       } else {
