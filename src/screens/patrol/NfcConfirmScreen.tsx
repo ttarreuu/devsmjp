@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     },
     contentPreview: {
         justifyContent: 'flex-start',
-        alignItems: 'center',
+        // alignItems: 'center',
         marginVertical: 40,
         marginBottom: 100,
         height: '80%',
