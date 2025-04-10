@@ -6449,7 +6449,7 @@ react-native-background-timer@^2.4.1:
 
 react-native-calendars@^1.1310.0:
   version "1.1310.0"
-  resolved "https://registry.npmjs.org/react-native-calendars/-/react-native-calendars-1.1310.0.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-calendars/-/react-native-calendars-1.1310.0.tgz#25f057426ce010af875117f93e1ded13609a92a4"
   integrity sha512-QTcxBDZRLVmoDriQD6vbRXiQ9bMEVtU8Hs7bGC3uJx6fIn+uVcx2V5liry0IwLLiu3tv1V5IHgQ2W/QYDzhMpA==
   dependencies:
     hoist-non-react-statics "^3.3.1"
