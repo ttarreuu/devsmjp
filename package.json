@@ -31,6 +31,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-geolocation-service": "^5.3.1",
     "react-native-gesture-handler": "^2.20.2",
+    "react-native-image-picker": "^8.2.0",
     "react-native-image-resizer": "^1.4.5",
     "react-native-keychain": "^9.2.2",
     "react-native-nfc-manager": "^3.16.1",
@@ -43,6 +44,7 @@
     "react-native-wind": "^1.2.0",
     "realm": "^20.1.0",
     "rn-secure-storage": "^3.0.1",
+    "socket.io-client": "^4.8.1",
     "yarn": "^1.22.22"
   },
   "devDependencies": {

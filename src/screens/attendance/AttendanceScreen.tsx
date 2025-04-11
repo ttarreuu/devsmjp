@@ -153,6 +153,11 @@ const AttendanceScreen = () => {
             realmInstance.delete(allLogs);
           });
 
+          realmInstance.write(() => {
+            const allData = realmInstance.objects('Schedule');
+            realmInstance.delete(allData);
+          });
+
           await pushLogsToApi();
 
           stopWatching();

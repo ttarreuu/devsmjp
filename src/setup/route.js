@@ -16,6 +16,9 @@ import PatrolScreen from '../screens/patrol/PatrolScreen';
 import ScheduleScreen from '../screens/schedule/ScheduleScreen';
 import NfcConfirmScreen from '../screens/patrol/NfcConfirmScreen';
 import ConfirmScreen from '../screens/patrol/ConfirmScreen';
+import ChatListScreen from '../screens/chat/ChatListScreen.tsx';
+import ChatScreen from '../screens/chat/ChatScreen.tsx';
+import ImageViewScreen from '../screens/chat/ImageViewScreen.tsx'
 
 import { getDefaultHeaderOptions } from '../components/Header';
 import QRConfirmScreen from '../screens/patrol/QRConfirmScreen';
@@ -77,6 +80,9 @@ export default function AppNavigator() {
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
 
+      <Stack.Screen name="ImageView" component={ImageViewScreen} options={getDefaultHeaderOptions('ImageView')} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={getDefaultHeaderOptions('ChatList')} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} options={getDefaultHeaderOptions('Chat')} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={getDefaultHeaderOptions('Attendance')} />
       <Stack.Screen name="Emergency" component={EmergencyScreen} options={getDefaultHeaderOptions('Emergency')} />
       <Stack.Screen name="Patrol" component={PatrolScreen} options={getDefaultHeaderOptions('Patrol')} />

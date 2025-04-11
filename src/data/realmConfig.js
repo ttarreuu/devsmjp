@@ -70,15 +70,31 @@ const CheckpointSchema = {
 
 const EmergencyContactSchema = {
   name: 'EmergencyContact', 
+  primaryKey: 'contactID',
   properties: {
     name: 'string',
     number: 'int',
-    id: 'int',
+    contactID: 'int',
   },
 };
 
+const ScheduleSchema = {
+  name: 'Schedule',
+  primaryKey: 'id',
+  properties: {
+    id: 'int',
+    name: 'string',
+    date: 'string',
+    timeStart: 'string',
+    timeEnd: 'string',
+    checkpoint: 'string[]', 
+  }
+};
+
+
+
 const realmInstance = new Realm({
-  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema],
+  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema],
   path: 'log_temp.realm', // Use a single Realm file for both schemas
 });
 

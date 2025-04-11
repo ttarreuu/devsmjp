@@ -8,4 +8,5 @@ export const menuData = [
   { name: "Emergency", route: "Emergency", icon: EmergencyIcon },
   { name: "Patrol", route: "Patrol", icon: PatrolIcon },
   { name: "Schedule", route: "Schedule", icon: ScheduleIcon },
+  { name: "ChatList", route: "ChatList", icon: ScheduleIcon },
 ];

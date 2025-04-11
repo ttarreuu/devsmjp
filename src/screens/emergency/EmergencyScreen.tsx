@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
 import Addcall from '../../assets/call.svg'; 
 import { getAllData } from '../../data/emergency_contact'; // Import the function to get all emergency contacts
+import realmInstance from '../../data/realmConfig';
 
 export default function EmergencyScreen() {
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
-    // Fetch contacts from the Realm database
-    const fetchContacts = () => {
-      const data = getAllData(); // Get all emergency contacts from Realm
-      setContacts(data);
+    const fetchContacts = async () => {
+      const allData = realmInstance.objects('EmergencyContact');
+      setContacts(allData);
     };
 
     fetchContacts();

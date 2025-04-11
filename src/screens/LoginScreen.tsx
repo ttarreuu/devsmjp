@@ -15,6 +15,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
   useEffect(() => {
     const checkLoginStatus = async () => {
     const storedUser = await AsyncStorage.getItem('user');
@@ -42,28 +43,32 @@ export default function LoginScreen() {
     }
   };
 
-  const handleLogin = async () => {
+    const handleLogin = async () => {
+    // setLoading(true);
     try {
-      const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
-      const users = await response.json();
+      const res = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
+      const users = await res.json();
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
 
-      const foundUser = users.find((user: { name: string; password: string; }) => user.name === username && user.password === password);
+      const foundUser = users.find(
+        (u: { name: string; email: string; password: string; }) =>
+          (u.name === trimmedUsername || u.email === trimmedUsername) &&
+          u.password === trimmedPassword
+      );
 
       if (foundUser) {
-        console.log('Login Successful:', foundUser);
-        
         await AsyncStorage.setItem('user', JSON.stringify(foundUser));
-        await fetchAndSaveContacts();
-
         navigation.navigate('MainTabs');
       } else {
-        Alert.alert('Login Failed', 'Invalid username or password!');
+        Alert.alert('Login Failed', 'Incorrect username or password');
       }
-    } catch (error) {
-      console.error('Login Error:', error);
-      Alert.alert('Error', 'Failed to connect to the server. Please try again.');
+    } catch (err) {
+      Alert.alert('Error', 'Unable to connect to server');
+    } finally {
+      // setLoading(false);
     }
-};
+  };
 
   return (
     <KeyboardAvoidingView

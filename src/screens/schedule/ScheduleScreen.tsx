@@ -1,22 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import realmInstance from '../../data/realmConfig';
 
 export default function ScheduleScreen() {
   const [selectedDate, setSelectedDate] = useState('');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeDate, setActiveDate] = useState({});
+
+  useEffect(() => {
+    const getAllScheduleDates = async () => {
+      const realmSchedules = realmInstance.objects('Schedule');
+      const realmDates = realmSchedules.map((item) => item.date); 
+
+      try {
+        const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule');
+        const apiSchedules = await response.json();
+
+        const apiDates = apiSchedules.map((item) => item.date); 
+
+        const allDates = Array.from(new Set([...realmDates, ...apiDates]));
+
+        const marked = {};
+        allDates.forEach(date => {
+          marked[date] = {
+            selected: true,
+            selectedColor: '#D0EFFF', // light background color for marked dates
+            selectedTextColor: '#000'
+          };
+        });
+
+        setActiveDate(marked);
+      } catch (error) {
+        console.error('Failed to fetch schedule dates:', error);
+      }
+    };
+
+    getAllScheduleDates();
+  }, []);
 
   const fetchActivities = async (date) => {
     setLoading(true);
     try {
-      const link = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule/${date}/schedul-detail`;
-      const response = await fetch(link);
-      const data = await response.json();
-      console.log('Fetched Data:', data); 
-      setActivities(data); 
+      const scheduleToday = realmInstance.objects('Schedule').filtered('date == $0', date);
+      let realmData = [...scheduleToday];
+
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const currentDate = `${yyyy}-${mm}-${dd}`;
+
+      if (date !== currentDate) {
+        const response = await fetch(`https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule/${date}/schedul-detail`);
+        const apiData = await response.json();
+
+        const validApiData = Array.isArray(apiData) ? apiData : [];
+
+        const formattedApiData = validApiData.map(item => ({
+          ...item,
+          checkpoint: item.checkpoint || [],
+        }));
+
+        realmData = [...realmData, ...formattedApiData];
+      }
+
+      setActivities(realmData);
     } catch (error) {
-      console.error(error);
+      console.error('Fetch error:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -31,8 +84,10 @@ export default function ScheduleScreen() {
   const renderActivityItem = ({ item }) => (
     <View style={styles.activityItem}>
       <Text style={styles.activityTitle}>{item.name}</Text>
-      <Text style={styles.activityTime}>Time: {item.time}</Text>
-      <Text style={styles.activityDescription}>Description: {item.description}</Text>
+      <Text style={styles.activityTime}>{`${item.timeStart} - ${item.timeEnd}`}</Text>
+      {/* <Text style={styles.activityDescription}>
+        Checkpoints: {item.checkpoint?.join(', ')}
+      </Text> */}
     </View>
   );
 
@@ -41,11 +96,37 @@ export default function ScheduleScreen() {
       <Calendar
         onDayPress={onDayPress}
         markedDates={{
-          [selectedDate]: { selected: true, marked: true, selectedColor: 'blue' },
+          ...activeDate,
+          [selectedDate]: {
+            ...(activeDate[selectedDate] || {}),
+            selected: true,
+            selectedColor: '#1185C8',
+            selectedTextColor: '#fff',
+          },
+        }}
+        theme={{
+          textMonthFontFamily: 'Poppins-Regular',
+          textDayFontFamily: 'Poppins-Regular',
+          textDayHeaderFontFamily: 'Poppins-Regular',
+          calendarBackground: 'transparent',
+          textSectionTitleColor: '#000',
+          dayTextColor: '#000',
+          todayTextColor: 'blue',
+          selectedDayTextColor: '#fff',
+          selectedDayBackgroundColor: '#1185C8',
+          arrowColor: 'black',
+          monthTextColor: '#000',
+        }}
+        style={{
+          backgroundColor: 'transparent',
         }}
       />
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#1185C8" />
+      ) : activities.length === 0 ? (
+        <Text style={{ textAlign: 'center', marginTop: 20, fontFamily: 'Poppins-Regular' }}>
+          No activities for this date.
+        </Text>
       ) : (
         <FlatList
           data={activities}
@@ -61,27 +142,26 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    padding: 20, 
-    marginTop: 50 
+    marginTop: 45,
+    marginHorizontal: 15
   },
   activityList: { 
-    marginTop: 20 
+    marginTop: 5,
   },
   activityItem: {
+    backgroundColor: '#dcdbdb',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderRadius: 10,
+    marginVertical: 8,
   },
   activityTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'Poppins-Bold'
   },
   activityTime: {
-    marginTop: 5,
-    color: '#555',
+    fontFamily: 'Poppins-Regular'
   },
   activityDescription: {
-    marginTop: 5,
-    color: '#777',
+    fontFamily: 'Poppins-Regular'
   },
 });
