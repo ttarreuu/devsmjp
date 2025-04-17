@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
 import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
@@ -11,6 +11,9 @@ import GPSIcon from '../../assets/gps-icon.svg';
 import QRIcon from '../../assets/qrcode-icon.svg';
 import NFCIcon from '../../assets/nfc-icon.svg';
 import LogIcon from '../../assets/log-icon.svg';
+import OffIcon from '../../assets/power-off.svg';
+import DropDownPicker from 'react-native-dropdown-picker';
+import CustomAlert from '../../components/CustomAlert';
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
@@ -22,7 +25,12 @@ const PatrolScreen = () => {
   const [cameraQRVisible, setCameraQRVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
-  const [isEnable, setIsEnable] = useState(false); // Add this state
+  const [isEnable, setIsEnable] = useState(false);
+  const [isStart, setIsStart] = useState(false);
+  const [isHide, setIsHide] = useState(false);
+  const [patrolMode, setPatrolMode] = useState('');
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(false);
 
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
@@ -118,127 +126,174 @@ const PatrolScreen = () => {
     },
   });
 
+  const toggleTracking = () => {
+    if (!isAttendance) {
+      setAlertMessage("You must mark attendance before starting patrol.");
+      setAlertVisible(true);
+      return;
+    }
+
+    setIsStart(!isStart);
+    setIsHide(!isHide);
+    if (!isStart) setPatrolMode('');
+  };
+
+
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([
+    { label: 'WALKING', value: 'walking' },
+    { label: 'VEHICLE (MOTORCYCLE)', value: 'motorcycle' },
+    { label: 'VEHICLE (CAR)', value: 'car' },
+    { label: 'VEHICLE (BOAT)', value: 'boat' },
+  ]);
+
   return (
     <View style={styles.page}>
-      <MapView style={styles.map} styleURL={Mapbox.StyleURL.Street}>
-        {currentLocation && (
-          <Camera
-            zoomLevel={17}
-            centerCoordinate={[106.823412, -6.191564]}
-          />
-        )}
-
-        {logData.length > 1 && (
-          <ShapeSource id="lineSource" shape={getGeoJSONLine()}>
-            <LineLayer id="lineLayer" style={styles.lineLayer} />
-          </ShapeSource>
-        )}
-
-        {currentLocation && (
-          <PointAnnotation
-            id="currentLocation"
-            coordinate={[currentLocation.longitude, currentLocation.latitude]}
+      <CustomAlert
+        visible={alertVisible}
+        title='Attendance Required'
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
+      {!isHide && (
+        <View style={styles.centerContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={toggleTracking}
+            // disabled={!isAttendance}
           >
-            <View style={styles.point} />
-          </PointAnnotation>
-        )}
+            <Text style={styles.buttonText2}>
+              {isStart ? 'Stop Patrol' : 'Start Patrol'}
+            </Text>
+          </TouchableOpacity>
 
-        {checkpoints.map((checkpoint) => (
-          <PointAnnotation
-            key={checkpoint.checkpointID}
-            id={checkpoint.checkpointID}
-            coordinate={[checkpoint.longitude, checkpoint.latitude]}
-          >
-            <View style={styles.checkpoint} />
-          </PointAnnotation>
-        ))}
+        </View>
+      )}
 
-        {currentLocation && nearestCheckpoint && (
-          <ShapeSource
-            id={`route-${nearestCheckpoint.checkpointID}`}
-            shape={{
-              type: "Feature",
-              geometry: {
-                type: "LineString",
-                coordinates: [
-                  [currentLocation.longitude, currentLocation.latitude],
-                  [nearestCheckpoint.longitude, nearestCheckpoint.latitude],
-                ],
-              },
-            }}
-          >
-            <LineLayer
-              id={`lineLayer-${nearestCheckpoint.checkpointID}`}
-              style={styles.routeLineLayer}
-            />
-          </ShapeSource>
-        )}
-      </MapView>
+      {isHide && (
+        <>
+        <View style={styles.topRightContainer}>
+          <TouchableOpacity style={styles.offButton} onPress={toggleTracking}>
+            <OffIcon height={30} width={30} />
+          </TouchableOpacity>
+        </View>
+        <MapView style={styles.map} styleURL={Mapbox.StyleURL.Street}>
+          {currentLocation && (
+            <Camera
+              zoomLevel={17}
+              centerCoordinate={[106.823412, -6.191564]} />
+          )}
 
-      <Text style={styles.title}>Patrol Mode</Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
+          {logData.length > 1 && (
+            <ShapeSource id="lineSource" shape={getGeoJSONLine()}>
+              <LineLayer id="lineLayer" style={styles.lineLayer} />
+            </ShapeSource>
+          )}
+
+          {currentLocation && (
+            <PointAnnotation
+              id="currentLocation"
+              coordinate={[currentLocation.longitude, currentLocation.latitude]}
+            >
+              <View style={styles.point} />
+            </PointAnnotation>
+          )}
+
+          {checkpoints.map((checkpoint) => (
+            <PointAnnotation
+              key={checkpoint.checkpointID}
+              id={checkpoint.checkpointID}
+              coordinate={[checkpoint.longitude, checkpoint.latitude]}
+            >
+              <View style={styles.checkpoint} />
+            </PointAnnotation>
+          ))}
+
+          {currentLocation && nearestCheckpoint && (
+            <ShapeSource
+              id={`route-${nearestCheckpoint.checkpointID}`}
+              shape={{
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: [
+                    [currentLocation.longitude, currentLocation.latitude],
+                    [nearestCheckpoint.longitude, nearestCheckpoint.latitude],
+                  ],
+                },
+              }}
+              >
+              <LineLayer
+                id={`lineLayer-${nearestCheckpoint.checkpointID}`}
+                style={styles.routeLineLayer} />
+            </ShapeSource>
+          )}
+        </MapView>    
+        {/* <Text style={styles.title}>Patrol Mode</Text> */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
           style={styles.floatingButton}
           onPress={() => {
             if (isEnable) {
               navigation.navigate('ConfirmScreen', { nearestCheckpoint });
             }
           }}>
-          <GPSIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>GPS</Text>
-        </TouchableOpacity>
+            <GPSIcon height={50} width={50} />
+            <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>GPS</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.floatingButton} 
+          <TouchableOpacity
+          style={styles.floatingButton}
           onPress={() => {
             if (isEnable) {
               navigation.navigate('NfcConfirmScreen', { nearestCheckpoint });
             }
           }}>
-          <NFCIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>NFC</Text>
-        </TouchableOpacity>
+            <NFCIcon height={50} width={50} />
+            <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>NFC</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.floatingButton} 
+          <TouchableOpacity
+          style={styles.floatingButton}
           onPress={() => {
             if (isEnable) {
               setCameraQRVisible(true);
             }
           }}>
-          <QRIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>QR Code</Text>
-        </TouchableOpacity>
+            <QRIcon height={50} width={50} />
+            <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>QR Code</Text>
+          </TouchableOpacity>
 
-
-        <TouchableOpacity 
-          style={styles.floatingButton} 
-          onPress={() => {
-            // navigate to log page
-          }}>
-          <LogIcon height={50} width={50}/>
-          <Text style={[styles.buttonText, !isAttendance && styles.disabledText]}>Log</Text>
-        </TouchableOpacity>
-      </View>
-
-      {cameraQRVisible && device && (
-        <View style={styles.cameraContainer}>
-          <VisionCamera
-            ref={cameraRef}
-            style={styles.camera}
-            device={device}
-            isActive={true}
-            codeScanner={codeScanner}
-          />
           <TouchableOpacity
-            style={styles.closeButton}
+            style={styles.floatingButton}
             onPress={() => {
-              setCameraQRVisible(false);
-            }}
-          >
-            <Text style={styles.buttonText}>Close</Text>
+            // navigate to log page
+            }}>
+            <LogIcon height={50} width={50} />
+            <Text style={[styles.buttonText, !isAttendance && styles.disabledText]}>Log</Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.dropdownContainer}>
+          <DropDownPicker
+            open={open}
+            value={patrolMode}
+            items={items}
+            setOpen={setOpen}
+            setValue={setPatrolMode}
+            setItems={setItems}
+            placeholder="PATROL MODE"
+            style={{ borderColor: '#1185C8', backgroundColor: '#1185C8' }}
+            textStyle={{ fontFamily: 'Poppins-Regular', color: open ? '#1185C8' : '#ffff', textAlign: 'center' }}
+            dropDownContainerStyle={{ borderColor: '#ccc'}}
+            ArrowDownIconComponent={({ style }) => (
+              <Text style={[style, { color: 'white' }]}>▼</Text>
+            )}
+            ArrowUpIconComponent={({ style }) => (
+              <Text style={[style, { color: 'white' }]}>▲</Text>
+            )}
+          />
+        </View>
+        </>
       )}
     </View>
   );
@@ -249,8 +304,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffff',
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  button: {
+    width: 150,  
+    height: 75, 
+    backgroundColor: 'transparent',
+    borderColor: '#1185C8',
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25, 
+    alignSelf: 'center',
+  },
+  buttonText2: {
+    color: '#1185C8', 
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold'
+  },
   map: { 
-    height: '75%' 
+    height: '70%' 
   },
   title: {
     marginVertical: 15,
@@ -265,9 +342,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    paddingTop: 15
   },
   floatingButton: { 
     marginHorizontal: 5 
+  },
+  topRightContainer: {
+    position: 'absolute',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 10,
+  },
+  offButton: {
+    backgroundColor: '#ffff',
+    padding: 8,
+    borderRadius: 20,
+    elevation: 5,
+    zIndex: 10
   },
   buttonText: { 
     color: '#1185C8', 
@@ -317,7 +409,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     padding: 10,
     borderRadius: 5,
-  }
+  },
+  dropdownContainer: {
+    marginHorizontal: 25,
+    marginVertical: 10,
+    zIndex: 1000,
+  },
 });
 
 export default PatrolScreen;

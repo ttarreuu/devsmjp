@@ -141,7 +141,10 @@ const AttendanceScreen = () => {
         if (!isAttendance) {
           const data = await response.json();
           AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
-          startWatching();
+          // startWatching();
+
+            setIsAttendance(true);
+            AsyncStorage.setItem('status', 'true');
 
           fetchData();
         } else {
