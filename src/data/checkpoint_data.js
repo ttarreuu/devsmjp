@@ -34,9 +34,13 @@ export const fetchData = async () => {
       });
     });
 
-    console.log('Data stored in Realm (Schedule):', scheduleData);
+    if (scheduleData == '') {
+      console.log('Today is free day');
+    } else {
+      console.log('Data stored in Realm (Schedule):', scheduleData);
+    }
   } catch (error) {
-    console.error('Error fetching Schedule:', error);
+    // console.error('Error fetching Schedule:', error);
   }
 
   try {

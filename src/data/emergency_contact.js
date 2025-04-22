@@ -3,22 +3,22 @@ import realmInstance from './realmConfig';
 const getNextId = () => {
   const data = realmInstance.objects('EmergencyContact');
   if (data.length > 0) {
-    return data.max('id') + 1;
+    return data.max('contactID') + 1;
   }
   return 1; 
 };
 
-export const saveData = (name, number) => {
+export const saveData = async (name, number) => {
   try {
-    const id = getNextId(); 
+    const contactID = getNextId(); 
     realmInstance.write(() => {
       realmInstance.create('EmergencyContact', {
-        id,
+        contactID,
         name, 
         number,
       });
     });
-    console.log('Data saved:', { id, name, number});
+    console.log('Data saved:', { contactID, name, number});
   } catch (error) {
     console.error('Error saving emergency contact:', error);
   }
@@ -28,7 +28,7 @@ export const getAllData = () => {
   try {
     const data = realmInstance.objects('EmergencyContact');
     return data.map(data => ({
-      id: data.id,
+      contactID: data.contactID,
       name: data.name,
       number: data.number    
     }));
@@ -38,15 +38,15 @@ export const getAllData = () => {
   }
 };
 
-export const deleteDataById = (id) => {
+export const deleteDataById = (contactID) => {
   try {
     realmInstance.write(() => {
-      const data = realmInstance.objectForPrimaryKey('EmergencyContact', id);
+      const data = realmInstance.objectForPrimaryKey('EmergencyContact', contactID);
       if (data) {
         realmInstance.delete(data);
-        console.log('Data deleted:', id);
+        console.log('Data deleted:', contactID);
       } else {
-        console.log('Data not found:', id);
+        console.log('Data not found:', contactID);
       }
     });
   } catch (error) {
