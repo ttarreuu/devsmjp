@@ -16,7 +16,6 @@ import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/lo
 
 import { deleteAllTempPatrolLogs } from '../../data/log_patrol_temp';
 import { getAllLogsPatrol, deleteAllLogsPatrol, deleteLogPatrolById } from '../../data/log_patrol';
-import realmInstance from '../../data/realmConfig';
 
 const AttendanceScreen = () => {
   const [logs, setLogs] = useState([]);
@@ -144,20 +143,11 @@ const AttendanceScreen = () => {
 
             setIsAttendance(true);
             AsyncStorage.setItem('status', 'true');
-            
+
         } else {
           // encryptAndStoreLogs();
           // saveLogsToStorage();
 
-          realmInstance.write(() => {
-            const allLogs = realmInstance.objects('Checkpoint');
-            realmInstance.delete(allLogs);
-          });
-
-          realmInstance.write(() => {
-            const allData = realmInstance.objects('Schedule');
-            realmInstance.delete(allData);
-          });
 
           await pushLogsToApi();
 
