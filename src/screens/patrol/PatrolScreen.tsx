@@ -321,7 +321,7 @@ const PatrolScreen = () => {
               setItems={setItems}
               placeholder="PATROL MODE"
               style={{ borderColor: '#1185C8', backgroundColor: '#1185C8' }}
-              textStyle={{ fontFamily: 'Poppins-Regular', color: open ? '#1185C8' : '#ffff', textAlign: 'center' }}
+              textStyle={{ fontFamily: 'Poppins-SemiBold', color: open ? '#1185C8' : '#ffff', textAlign: 'center' }}
               dropDownContainerStyle={{ borderColor: '#ccc'}}
               ArrowDownIconComponent={({ style }) => (
                 <Text style={[style, { color: 'white' }]}>▼</Text>
