@@ -91,10 +91,19 @@ const ScheduleSchema = {
   }
 };
 
-
+const UserSchema = {
+  name: 'User',
+  primaryKey: 'email',
+  properties: {
+    name: 'string',
+    photo: 'string', 
+    email: 'string',
+    phone: 'string',
+  },
+};
 
 const realmInstance = new Realm({
-  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema],
+  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema],
   path: 'log_temp.realm', // Use a single Realm file for both schemas
 });
 

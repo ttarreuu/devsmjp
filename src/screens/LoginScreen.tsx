@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { saveData } from '../data/emergency_contact';
 import { fetchData } from '../data/checkpoint_data';
 import { downloadMapboxOfflineRegion } from '../components/Maps';
+import realmInstance from '../data/realmConfig';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -29,34 +30,44 @@ export default function LoginScreen() {
   }, []);
 
     const handleLogin = async () => {
-    // setLoading(true);
-    try {
-      const res = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
-      const users = await res.json();
-      const trimmedUsername = username.trim();
-      const trimmedPassword = password.trim();
+      try {
+        const res = await fetch(
+          'https://672fc91b66e42ceaf15eb4cc.mockapi.io/user',
+        );
+        const users = await res.json();
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
 
-      const foundUser = users.find(
-        (u: { name: string; email: string; password: string; }) =>
-          (u.name === trimmedUsername || u.email === trimmedUsername) &&
-          u.password === trimmedPassword
-      );
+        const foundUser = users.find(
+          (u: {name: string; email: string; password: string}) =>
+            (u.name === trimmedUsername || u.email === trimmedUsername) &&
+            u.password === trimmedPassword,
+        );
 
-      if (foundUser) {
-        await AsyncStorage.setItem('user', JSON.stringify(foundUser));
-        await fetchData();
-        // await saveData();
-        await downloadMapboxOfflineRegion();
-        navigation.navigate('MainTabs');
-      } else {
-        Alert.alert('Login Failed', 'Incorrect username or password');
+        if (foundUser) {
+          await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+
+          realmInstance.write(() => {
+            realmInstance.create(
+              'User',
+              {
+                name: foundUser.name,
+                photo: foundUser.photo || '', // fallback if missing
+                email: foundUser.email,
+                phone: foundUser.phone || '',
+              });
+          });
+
+          await fetchData();
+          await downloadMapboxOfflineRegion();
+          navigation.navigate('MainTabs');
+        } else {
+          Alert.alert('Login Failed', 'Incorrect username or password');
+        }
+      } catch (err) {
+        Alert.alert('Error', 'Unable to connect to server');
       }
-    } catch (err) {
-      Alert.alert('Error', 'Unable to connect to server');
-    } finally {
-      // setLoading(false);
-    }
-  };
+    };
 
   return (
     <KeyboardAvoidingView
