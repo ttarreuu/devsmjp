@@ -8,8 +8,7 @@ import PwIcon from '../assets/pw-icon.svg';
 import HiddenPwIcon from '../assets/hidden-pw.svg';
 import UnhidePwIcon from '../assets/unhide-pw.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveData } from '../data/emergency_contact';
-import { fetchData } from '../data/checkpoint_data';
+import { fetchData } from '../data/sync_data';
 import { downloadMapboxOfflineRegion } from '../components/Maps';
 import realmInstance from '../data/realmConfig';
 
@@ -59,7 +58,7 @@ export default function LoginScreen() {
           });
 
           await fetchData();
-          await downloadMapboxOfflineRegion();
+          downloadMapboxOfflineRegion();
           navigation.navigate('MainTabs');
         } else {
           Alert.alert('Login Failed', 'Incorrect username or password');

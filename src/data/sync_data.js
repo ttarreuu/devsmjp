@@ -6,8 +6,11 @@ export const fetchData = async () => {
     const data = await response.json();
 
     realmInstance.write(() => {
+      const oldCheckpoints = realmInstance.objects('Checkpoint');
+      realmInstance.delete(oldCheckpoints);
+
       data.forEach(item => {
-      realmInstance.create('Checkpoint', item);
+        realmInstance.create('Checkpoint', item);
       });
     });
 
@@ -26,6 +29,9 @@ export const fetchData = async () => {
     console.log('Schedule Data:', scheduleData);
 
     realmInstance.write(() => {
+      const oldSchedules = realmInstance.objects('Schedule');
+      realmInstance.delete(oldSchedules);
+
       scheduleData.forEach(item => {
         realmInstance.create('Schedule', {
           ...item,
@@ -34,7 +40,7 @@ export const fetchData = async () => {
       });
     });
 
-    if (scheduleData == '') {
+    if (scheduleData.length === 0) {
       console.log('Today is free day');
     } else {
       console.log('Data stored in Realm (Schedule):', scheduleData);
@@ -48,6 +54,9 @@ export const fetchData = async () => {
     const contactData = await contactResponse.json();
 
     realmInstance.write(() => {
+      const oldContacts = realmInstance.objects('EmergencyContact');
+      realmInstance.delete(oldContacts);
+
       contactData.forEach(item => {
         realmInstance.create('EmergencyContact', {
           ...item,
@@ -61,5 +70,5 @@ export const fetchData = async () => {
   } catch (error) {
     console.error('Error fetching Contact:', error);
   }
-  
 };
+

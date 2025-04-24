@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {menuData} from '../data/menu_data';
 import realmInstance from '../data/realmConfig';
+import { downloadMapboxOfflineRegion } from '../components/Maps';
 
 export default function DashboardScreen({navigation}) {
   const [user, setUser] = useState(null);
@@ -18,6 +19,7 @@ export default function DashboardScreen({navigation}) {
     if (realmUser) {
       setUser(realmUser);
     }
+    // downloadMapboxOfflineRegion();
   }, []);
 
   const renderMenuItem = ({item}) => {
@@ -91,7 +93,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase'
   },
   email: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     fontFamily: 'Poppins-Regular',
     textAlign: 'right'
