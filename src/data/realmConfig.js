@@ -93,8 +93,9 @@ const ScheduleSchema = {
 
 const UserSchema = {
   name: 'User',
-  primaryKey: 'email',
+  primaryKey: 'userID',
   properties: {
+    userID: 'string',
     name: 'string',
     photo: 'string', 
     email: 'string',
@@ -102,8 +103,32 @@ const UserSchema = {
   },
 };
 
+const CompanySchema = {
+  name: 'Company',
+  primaryKey: 'companyID',
+  properties: {
+    companyID: 'string',
+    name: 'string',
+    Lat: 'double',
+    Long: 'double',
+    radius: 'int',
+  },
+};
+
+const AttendanceSchema = {
+  name: 'Attendance',
+  properties: {
+    attendanceID: 'string',
+    startDateTime: 'string',
+    endDateTime: 'string',
+    startPicture: 'string',
+    endPicture: 'string',
+    status: 'bool', // true for started, false for ended
+  },
+};
+
 const realmInstance = new Realm({
-  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema],
+  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema, AttendanceSchema],
   path: 'log_temp.realm', // Use a single Realm file for both schemas
 });
 

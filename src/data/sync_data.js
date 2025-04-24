@@ -5,18 +5,35 @@ export const fetchData = async () => {
     const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/Checkpoint');
     const data = await response.json();
 
+    // Get companyID from Realm (new primaryKey in CompanySchema)
+    const company = realmInstance.objects('Company')[0];
+    const companyID = company?.companyID;
+
+    if (!companyID) {
+      console.error('No company ID found in Realm');
+      return;
+    }
+
+    // Use companyID in the Checkpoint API URL
+    const checkpointURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${encodeURIComponent(companyID)}/Checkpoint`;
+
+    // Fetch the checkpoint data
+    const checkpointResponse = await fetch(checkpointURL);
+    const checkpointData = await checkpointResponse.json();
+
+    // Store checkpoint data in Realm
     realmInstance.write(() => {
       const oldCheckpoints = realmInstance.objects('Checkpoint');
       realmInstance.delete(oldCheckpoints);
 
-      data.forEach(item => {
+      checkpointData.forEach(item => {
         realmInstance.create('Checkpoint', item);
       });
     });
 
-    console.log('Data stored in Realm:', data);
+    console.log('Checkpoint Data stored in Realm:', checkpointData);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching Checkpoint:', error);
   }
 
   try {
@@ -24,7 +41,18 @@ export const fetchData = async () => {
     const formattedDate = today.toISOString().split('T')[0];
     console.log('Formatted Date:', formattedDate);
 
-    const scheduleResponse = await fetch(`https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule/${formattedDate}/schedul-detail`);
+    // Get userID from Realm (new primaryKey in UserSchema)
+    const user = realmInstance.objects('User')[0];
+    const userID = user?.userID;
+
+    if (!userID) {
+      console.error('No user ID found in Realm');
+      return;
+    }
+
+    const scheduleURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${encodeURIComponent(userID)}/schedule/${encodeURIComponent(formattedDate)}/schedul-detail`;
+
+    const scheduleResponse = await fetch(scheduleURL);
     const scheduleData = await scheduleResponse.json();
     console.log('Schedule Data:', scheduleData);
 
@@ -40,11 +68,7 @@ export const fetchData = async () => {
       });
     });
 
-    if (scheduleData.length === 0) {
-      console.log('Today is free day');
-    } else {
-      console.log('Data stored in Realm (Schedule):', scheduleData);
-    }
+    console.log('Data stored in Realm (Schedule):', scheduleData);
   } catch (error) {
     // console.error('Error fetching Schedule:', error);
   }
@@ -71,4 +95,3 @@ export const fetchData = async () => {
     console.error('Error fetching Contact:', error);
   }
 };
-

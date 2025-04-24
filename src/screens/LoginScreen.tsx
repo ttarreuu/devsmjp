@@ -28,45 +28,76 @@ export default function LoginScreen() {
     checkLoginStatus();
   }, []);
 
-    const handleLogin = async () => {
-      try {
-        const res = await fetch(
-          'https://672fc91b66e42ceaf15eb4cc.mockapi.io/user',
+  const handleLogin = async () => {
+    try {
+      const res = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
+      const users = await res.json();
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+
+      const foundUser = users.find(
+        (u: {name: string; email: string; password: string}) =>
+          (u.name === trimmedUsername || u.email === trimmedUsername) &&
+          u.password === trimmedPassword,
+      );
+
+      if (foundUser) {
+        await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+
+        realmInstance.write(() => {
+          realmInstance.create('User', {
+            userID: foundUser.userID,
+            name: foundUser.name,
+            photo: foundUser.photo || '',
+            email: foundUser.email,
+            phone: foundUser.phone || '',
+          });
+        });
+
+        const companyRes = await fetch(
+          'https://672fc91b66e42ceaf15eb4cc.mockapi.io/company',
         );
-        const users = await res.json();
-        const trimmedUsername = username.trim();
-        const trimmedPassword = password.trim();
+        const companies = await companyRes.json();
 
-        const foundUser = users.find(
-          (u: {name: string; email: string; password: string}) =>
-            (u.name === trimmedUsername || u.email === trimmedUsername) &&
-            u.password === trimmedPassword,
+        const userCompany = companies.find(
+          (company: any) => company.companyID === foundUser.companyID,
         );
 
-        if (foundUser) {
-          await AsyncStorage.setItem('user', JSON.stringify(foundUser));
-
+        if (userCompany) {
           realmInstance.write(() => {
             realmInstance.create(
-              'User',
+              'Company',
               {
-                name: foundUser.name,
-                photo: foundUser.photo || '', // fallback if missing
-                email: foundUser.email,
-                phone: foundUser.phone || '',
+                companyID: userCompany.companyID,
+                name: userCompany.name,
+                Lat: userCompany.Lat,
+                Long: userCompany.Long,
+                radius: userCompany.radius,
               });
           });
 
-          await fetchData();
-          downloadMapboxOfflineRegion();
-          navigation.navigate('MainTabs');
+          await AsyncStorage.setItem('company', JSON.stringify(userCompany));
+          console.log(
+            'Company data saved to Realm and AsyncStorage:',
+            userCompany,
+          );
         } else {
-          Alert.alert('Login Failed', 'Incorrect username or password');
+          console.warn('Company not found for companyID:', foundUser.companyID);
         }
-      } catch (err) {
-        Alert.alert('Error', 'Unable to connect to server');
+
+        await fetchData();
+        downloadMapboxOfflineRegion();
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Login Failed', 'Incorrect username or password');
       }
-    };
+    } catch (err) {
+      console.error('Login error:', err);
+      Alert.alert('Error', 'Unable to connect to server');
+    }
+  };
+
+
 
   return (
     <KeyboardAvoidingView

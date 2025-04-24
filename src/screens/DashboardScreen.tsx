@@ -9,18 +9,22 @@ import {
 } from 'react-native';
 import {menuData} from '../data/menu_data';
 import realmInstance from '../data/realmConfig';
-import { downloadMapboxOfflineRegion } from '../components/Maps';
 
 export default function DashboardScreen({navigation}) {
   const [user, setUser] = useState(null);
+  const [companyName, setCompanyName] = useState(null);
 
   useEffect(() => {
     const realmUser = realmInstance.objects('User')[0];
+    const realmCompany = realmInstance.objects('Company')[0]; // Get the first company
     if (realmUser) {
       setUser(realmUser);
     }
-    // downloadMapboxOfflineRegion();
+    if (realmCompany) {
+      setCompanyName(realmCompany.name);
+    }
   }, []);
+
 
   const renderMenuItem = ({item}) => {
     const IconComponent = item.icon;
@@ -41,8 +45,7 @@ export default function DashboardScreen({navigation}) {
         <View style={styles.header}>
           <View style={{flex: 1}}>
             <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-            {/* <Text style={styles.phone}>{user.phone}</Text> */}
+            <Text style={styles.email}>{companyName}</Text>
           </View>
           <Image
             source={{
@@ -82,10 +85,11 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 30,
-    marginHorizontal: 15,
+    marginRight: 15,
+    marginLeft: 10
   },
   name: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     fontFamily: 'Poppins-Bold',
     color: '#333',
@@ -97,11 +101,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontFamily: 'Poppins-Regular',
     textAlign: 'right'
-  },
-  phone: {
-    fontSize: 14,
-    color: '#888',
-    fontFamily: 'Poppins-Regular',
   },
   card: {
     flex: 1,

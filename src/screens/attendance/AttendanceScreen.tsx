@@ -9,10 +9,10 @@ import { sendDataTrackingToApi, sendDataPatrolToApi } from '../../data/sendDataT
 import RNSecureStorage, { ACCESSIBLE } from 'rn-secure-storage';
 import uuid from 'react-native-uuid';
 import NetInfo from "@react-native-community/netinfo";
+import realmInstance from '../../data/realmConfig';
 
 import { saveTempLog, deleteAllTempLogs } from '../../data/log_tracking_temp';
 import { saveLog, getAllLogs, deleteAllLogs, deleteLogById } from '../../data/log_tracking';
-
 
 import { deleteAllTempPatrolLogs } from '../../data/log_patrol_temp';
 import { getAllLogsPatrol, deleteAllLogsPatrol, deleteLogPatrolById } from '../../data/log_patrol';
@@ -110,28 +110,41 @@ const AttendanceScreen = () => {
     }
   };
   
+  const getUserIDFromRealm = () => {
+    const user = realmInstance.objects('User')[0];
+    return user?.userID || null;
+  };
+
   const handleConfirm = async () => {
     try {
+      const userID = getUserIDFromRealm();
+      if (!userID) {
+        console.error('User ID not found in Realm');
+        return;
+      }
+
       const currentDateTime = new Date().toISOString();
 
       if (isAttendance) {
-        setEndDateTime(currentDateTime); 
+        setEndDateTime(currentDateTime);
       } else {
-        setStartDateTime(currentDateTime); 
+        setStartDateTime(currentDateTime);
       }
 
       const attendanceID = await AsyncStorage.getItem('attendanceID');
+
       const endpoint = isAttendance
-        ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance/${attendanceID}`
-        : 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/Attendance';
+        ? `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance/${attendanceID}`
+        : `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance`;
+
       const method = isAttendance ? 'PUT' : 'POST';
       const body = isAttendance
-        ? { endDateTime: currentDateTime, endPicture }
-        : { startDateTime: currentDateTime, startPicture };
+        ? {endDateTime: currentDateTime, endPicture}
+        : {startDateTime: currentDateTime, startPicture};
 
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body),
       });
 
@@ -139,39 +152,29 @@ const AttendanceScreen = () => {
         if (!isAttendance) {
           const data = await response.json();
           AsyncStorage.setItem('attendanceID', data.attendanceID.toString());
-          // startWatching();
-
-            setIsAttendance(true);
-            AsyncStorage.setItem('status', 'true');
-
+          setIsAttendance(true);
+          AsyncStorage.setItem('status', 'true');
         } else {
-          // encryptAndStoreLogs();
-          // saveLogsToStorage();
-
-
           await pushLogsToApi();
-
           stopWatching();
           AsyncStorage.removeItem('attendanceID');
           AsyncStorage.removeItem('logID');
 
           const key = uuid.v4();
-          console.log(key);
-          await RNSecureStorage.setItem('encryptKey', key, {accessible: ACCESSIBLE.WHEN_UNLOCKED});
-
+          await RNSecureStorage.setItem('encryptKey', key, {
+            accessible: ACCESSIBLE.WHEN_UNLOCKED,
+          });
           const print = await RNSecureStorage.getItem('encryptKey');
           console.log(print);
-          
         }
       }
 
       setIsHide(false);
       setPreviewVisible(false);
     } catch (error) {
-      console.error('Error starting background task:', error);
+      console.error('Error handling confirm:', error);
     }
   };
-
 
   const startWatching = async () => {
 

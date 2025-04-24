@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
-
-const API_URL = 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/messages';
+import realmInstance from '../../data/realmConfig';
 
 export default function ChatScreen({ route }) {
   const { recipient } = route.params;
@@ -22,6 +21,7 @@ export default function ChatScreen({ route }) {
   const [imageUri, setImageUri] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const flatListRef = useRef();
+  const [companyID, setCompanyID] = useState('');
 
   useEffect(() => {
     const loadUserAndMessages = async () => {
@@ -30,20 +30,52 @@ export default function ChatScreen({ route }) {
       setCurrentUser(parsedUser);
 
       try {
-        const res = await fetch(API_URL);
-        const allMessages = await res.json();
+        const company = realmInstance.objects('Company')[0]; // get the first Company entry
+        const companyIDFromRealm = company?.companyID;
+
+        if (!companyIDFromRealm) {
+          console.warn('CompanyID not found in Realm.');
+          return;
+        }
+
+        setCompanyID(companyIDFromRealm);
+
+        const response = await fetch(
+          `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${companyIDFromRealm}/messages`,
+        );
+        const allMessages = await response.json();
 
         const chatMessages = allMessages.filter(
-          (msg) =>
-            (msg.senderID === parsedUser.userID && msg.recipientID === recipient.userID) ||
-            (msg.senderID === recipient.userID && msg.recipientID === parsedUser.userID)
+          msg =>
+            (msg.senderID === parsedUser.userID &&
+              msg.recipientID === recipient.userID) ||
+            (msg.senderID === recipient.userID &&
+              msg.recipientID === parsedUser.userID),
         );
 
         const sortedMessages = chatMessages.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
         );
 
         setMessages(sortedMessages);
+
+        // Mark messages as read if they were sent to current user
+        sortedMessages.forEach(async msg => {
+          if (msg.recipientID === parsedUser.userID && !msg.read) {
+            try {
+              await fetch(
+                `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${companyIDFromRealm}/messages/${msg.id}`,
+                {
+                  method: 'PUT',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({read: true}),
+                },
+              );
+            } catch (error) {
+              console.error('Error marking message as read:', error);
+            }
+          }
+        });
       } catch (error) {
         console.error('Error loading messages:', error);
       }
@@ -69,7 +101,8 @@ export default function ChatScreen({ route }) {
   };
 
   const sendMessage = async () => {
-    if ((input.trim() === '' && !imageUri) || !currentUser) return;
+    if ((input.trim() === '' && !imageUri) || !currentUser || !companyID)
+      return;
 
     const newMessage = {
       senderID: currentUser.userID,
@@ -80,39 +113,49 @@ export default function ChatScreen({ route }) {
     };
 
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMessage),
-      });
+      const res = await fetch(
+        `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${companyID}/messages`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(newMessage),
+        },
+      );
 
       const savedMessage = await res.json();
-      setMessages((prev) => [...prev, savedMessage]);
+      setMessages(prev => [...prev, savedMessage]);
       setInput('');
       setImageUri(null);
-      flatListRef.current?.scrollToEnd({ animated: true });
+      flatListRef.current?.scrollToEnd({animated: true});
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     const isSentByCurrentUser = item.senderID === currentUser?.userID;
+
     return (
       <View
         style={[
           styles.messageBubble,
           isSentByCurrentUser ? styles.sentBubble : styles.receivedBubble,
-        ]}
-      >
+        ]}>
         <Text style={styles.messageText}>{item.content}</Text>
+
         {item.image && (
-          <Image
-            source={{ uri: item.image }}
-            style={styles.messageImage}
-          />
+          <Image source={{uri: item.image}} style={styles.messageImage} />
         )}
-        <Text style={styles.timestamp}>{new Date(item.createdAt).toLocaleTimeString()}</Text>
+
+        <View style={styles.messageMeta}>
+          <Text style={styles.timestamp}>
+            {new Date(item.createdAt).toLocaleTimeString()}
+          </Text>
+
+          {item.read && (
+            <Text style={styles.readIndicator}>✓</Text> 
+          )}
+        </View>
       </View>
     );
   };
@@ -159,13 +202,13 @@ export default function ChatScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 55 
+    paddingTop: 55,
   },
-  messageList: { 
-    padding: 10 
+  messageList: {
+    padding: 10,
   },
   messageBubble: {
     padding: 10,
@@ -252,5 +295,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  }
+  },
+  messageMeta: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+
+  readIndicator: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: '#4CAF50', 
+  },
 });

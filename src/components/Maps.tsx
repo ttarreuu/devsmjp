@@ -1,5 +1,6 @@
 import Mapbox from '@rnmapbox/maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import realmInstance from '../data/realmConfig'; // Adjust the path
 
 Mapbox.setAccessToken(
   'pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA',
@@ -24,17 +25,13 @@ export function downloadMapboxOfflineRegion(
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
-      const response = await fetch(
-        'https://672fc91b66e42ceaf15eb4cc.mockapi.io/company',
-      );
-      const data = await response.json();
+      const company = realmInstance.objects('Company')[0]; // Get the first company
 
-      if (!data || data.length === 0) {
-        console.log('No company data found.');
-        return resolve(); 
+      if (!company) {
+        console.log('No local company data found.');
+        return resolve();
       }
 
-      const company = data[0];
       const radiusInMeters = company.radius;
 
       const latDiff = radiusInMeters / 111320;
@@ -47,7 +44,7 @@ export function downloadMapboxOfflineRegion(
       ];
 
       const options = {
-        name: `offlinePack_${company.companyID}`,
+        name: `offlinePack_${company.companyID}`, // ← uses Realm companyID
         styleURL: Mapbox.StyleURL.Street,
         bounds,
         minZoom: 10,
@@ -62,7 +59,7 @@ export function downloadMapboxOfflineRegion(
       if (alreadyDownloaded) {
         console.log('Offline pack already downloaded.');
         await AsyncStorage.setItem('offlineMapDownloaded', 'true');
-        return resolve(); 
+        return resolve();
       }
 
       const progressListener = (
@@ -75,7 +72,7 @@ export function downloadMapboxOfflineRegion(
         if (status.percentage === 100 && status.state === 'complete') {
           console.log('Offline map download complete!');
           AsyncStorage.setItem('offlineMapDownloaded', 'true');
-          resolve(); 
+          resolve();
         }
       };
 

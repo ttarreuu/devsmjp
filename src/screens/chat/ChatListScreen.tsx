@@ -1,7 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import realmInstance from '../../data/realmConfig'; 
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState([]);
@@ -17,16 +25,29 @@ export default function ChatListScreen() {
       setCurrentUser(parsedUser);
 
       try {
-        const [userRes, msgRes] = await Promise.all([
-          fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user'),
-          fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/messages')
-        ]);
+        const company = realmInstance.objects('Company')[0];
+        const companyID = company?.companyID;
 
-        const allUsers = await userRes.json();
-        const allMessages = await msgRes.json();
+        if (!companyID) {
+          console.error('No company ID found in Realm');
+          return;
+        }
 
-        const filteredUsers = allUsers.filter(user => user.userID !== parsedUser.userID);
+        const allUsersResponse = await fetch(
+          'https://672fc91b66e42ceaf15eb4cc.mockapi.io/user',
+        );
+        const allUsers = await allUsersResponse.json();
+
+        const filteredUsers = allUsers.filter(
+          (          user: { userID: any; companyID: {}; }) =>
+            user.userID !== parsedUser.userID && user.companyID === companyID,
+        );
         setUsers(filteredUsers);
+
+        const messagesResponse = await fetch(
+          `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${companyID}/messages`,
+        );
+        const allMessages = await messagesResponse.json();
         setMessages(allMessages);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -38,47 +59,44 @@ export default function ChatListScreen() {
     fetchData();
   }, []);
 
-  const handleSelectUser = (user) => {
-    navigation.navigate('ChatScreen', { recipient: user });
+  const handleSelectUser = (user: never) => {
+    navigation.navigate('ChatScreen', {recipient: user});
   };
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('user');
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    navigation.reset({index: 0, routes: [{name: 'Login'}]});
   };
 
-  const getLastMessage = (otherUserID) => {
-    const relevantMessages = messages.filter(msg =>
-      (msg.senderID === currentUser.userID && msg.recipientID === otherUserID) ||
-      (msg.senderID === otherUserID && msg.recipientID === currentUser.userID)
+  const getLastMessage = (otherUserID: any) => {
+    const relevantMessages = messages.filter(
+      msg =>
+        (msg.senderID === currentUser.userID &&
+          msg.recipientID === otherUserID) ||
+        (msg.senderID === otherUserID &&
+          msg.recipientID === currentUser.userID),
     );
 
     if (relevantMessages.length === 0) return null;
 
-    const sorted = relevantMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sorted = relevantMessages.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
     return sorted[0].content;
   };
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <Text style={styles.title}>Welcome, {currentUser?.name}</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View> */}
-
       {loading ? (
         <ActivityIndicator size="large" color="#1185C8" />
       ) : (
         <FlatList
           data={users}
-          keyExtractor={(item) => item.userID}
-          renderItem={({ item }) => (
+          keyExtractor={item => item.userID}
+          renderItem={({item}) => (
             <TouchableOpacity
               style={styles.userCard}
-              onPress={() => handleSelectUser(item)}
-            >
+              onPress={() => handleSelectUser(item)}>
               <Text style={styles.userName}>{item.name}</Text>
               <Text style={styles.userEmail}>
                 {getLastMessage(item.userID) || 'No messages yet'}
@@ -97,21 +115,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: '#fff',
-    paddingTop: 60
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold'
-  },
-  logoutText: {
-    color: 'red',
-    fontWeight: 'bold'
+    paddingTop: 60,
   },
   userCard: {
     padding: 15,
@@ -121,10 +125,10 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   userEmail: {
     fontSize: 14,
-    color: '#666'
+    color: '#666',
   },
 });
