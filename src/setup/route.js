@@ -81,8 +81,8 @@ export default function AppNavigator() {
       <Stack.Screen name="MainTabs" component={BottomTabs} />
 
       <Stack.Screen name="ImageView" component={ImageViewScreen} options={getDefaultHeaderOptions('ImageView')} />
-      <Stack.Screen name="ChatList" component={ChatListScreen} options={getDefaultHeaderOptions('ChatList')} />
-      <Stack.Screen name="ChatScreen" component={ChatScreen} options={getDefaultHeaderOptions('Chat')} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={getDefaultHeaderOptions('Message')} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} options={getDefaultHeaderOptions('')} />
       <Stack.Screen name="Attendance" component={AttendanceScreen} options={getDefaultHeaderOptions('Attendance')} />
       <Stack.Screen name="Emergency" component={EmergencyScreen} options={getDefaultHeaderOptions('Emergency')} />
       <Stack.Screen name="Patrol" component={PatrolScreen} options={getDefaultHeaderOptions('Patrol')} />

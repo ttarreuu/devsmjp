@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
 import Addcall from '../../assets/call.svg'; 
-import { getAllData } from '../../data/emergency_contact'; // Import the function to get all emergency contacts
 import realmInstance from '../../data/realmConfig';
 
 export default function EmergencyScreen() {
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
-    const fetchContacts = async () => {
-      const allData = realmInstance.objects('EmergencyContact');
-      setContacts(allData);
+    const getEmergencyContacts = () => {
+      try {
+        const realmContacts = realmInstance.objects('EmergencyContact');
+        const plainContacts = realmContacts.map(contact => ({
+          id: contact.contactID,
+          name: contact.name,
+          number: contact.number,
+        }));
+        setContacts(plainContacts);
+      } catch (error) {
+        console.error('Error getting emergency contacts:', error);
+        setContacts([]);
+      }
     };
 
-    fetchContacts();
+    getEmergencyContacts();
   }, []);
 
   const makeCall = (number) => {

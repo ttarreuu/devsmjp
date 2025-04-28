@@ -12,33 +12,45 @@ export default function ScheduleScreen() {
   useEffect(() => {
     const getAllScheduleDates = async () => {
       const realmSchedules = realmInstance.objects('Schedule');
-      const realmDates = realmSchedules.map((item) => item.date); 
+      const realmDates = realmSchedules.map(item => item.date);
+
+      const userID = getUserIDFromRealm();
 
       try {
-        const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule');
+        const response = await fetch(
+          `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/schedule`,
+        );
         const apiSchedules = await response.json();
 
-        const apiDates = apiSchedules.map((item) => item.date); 
+        if (Array.isArray(apiSchedules)) {
+          const apiDates = apiSchedules.map(item => item.date);
 
-        const allDates = Array.from(new Set([...realmDates, ...apiDates]));
+          const allDates = Array.from(new Set([...realmDates, ...apiDates]));
 
-        const marked = {};
-        allDates.forEach(date => {
-          marked[date] = {
-            selected: true,
-            selectedColor: '#D0EFFF', // light background color for marked dates
-            selectedTextColor: '#000'
-          };
-        });
+          const marked = {};
+          allDates.forEach(date => {
+            marked[date] = {
+              selected: true,
+              selectedColor: '#D0EFFF',
+              selectedTextColor: '#000',
+            };
+          });
 
-        setActiveDate(marked);
+          setActiveDate(marked);
+        } else {
+          console.warn('API did not return an array:', apiSchedules);
+        }
       } catch (error) {
         console.error('Failed to fetch schedule dates:', error);
       }
     };
-
     getAllScheduleDates();
   }, []);
+
+  const getUserIDFromRealm = () => {
+    const user = realmInstance.objects('User')[0];
+    return user?.userID || null;
+  };
 
   const fetchActivities = async (date) => {
     setLoading(true);
@@ -52,8 +64,12 @@ export default function ScheduleScreen() {
       const dd = String(today.getDate()).padStart(2, '0');
       const currentDate = `${yyyy}-${mm}-${dd}`;
 
+      const userID = getUserIDFromRealm();
+
       if (date !== currentDate) {
-        const response = await fetch(`https://672fc91b66e42ceaf15eb4cc.mockapi.io/schedule/${date}/schedul-detail`);
+        const response = await fetch(
+          `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/schedule/${date}/schedul-detail`,
+        );
         const apiData = await response.json();
 
         const validApiData = Array.isArray(apiData) ? apiData : [];

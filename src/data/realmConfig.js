@@ -123,13 +123,13 @@ const AttendanceSchema = {
     endDateTime: 'string',
     startPicture: 'string',
     endPicture: 'string',
-    status: 'bool', // true for started, false for ended
+    status: 'bool', 
   },
 };
 
 const realmInstance = new Realm({
   schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema, AttendanceSchema],
-  path: 'log_temp.realm', // Use a single Realm file for both schemas
+  path: 'log_temp.realm', 
 });
 
 export default realmInstance;
