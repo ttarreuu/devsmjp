@@ -5,7 +5,6 @@ export const fetchData = async () => {
     const response = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/Checkpoint');
     const data = await response.json();
 
-    // Get companyID from Realm (new primaryKey in CompanySchema)
     const company = realmInstance.objects('Company')[0];
     const companyID = company?.companyID;
 
@@ -14,14 +13,11 @@ export const fetchData = async () => {
       return;
     }
 
-    // Use companyID in the Checkpoint API URL
     const checkpointURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${encodeURIComponent(companyID)}/Checkpoint`;
 
-    // Fetch the checkpoint data
     const checkpointResponse = await fetch(checkpointURL);
     const checkpointData = await checkpointResponse.json();
 
-    // Store checkpoint data in Realm
     realmInstance.write(() => {
       const oldCheckpoints = realmInstance.objects('Checkpoint');
       realmInstance.delete(oldCheckpoints);
@@ -41,7 +37,6 @@ export const fetchData = async () => {
     const formattedDate = today.toISOString().split('T')[0];
     console.log('Formatted Date:', formattedDate);
 
-    // Get userID from Realm (new primaryKey in UserSchema)
     const user = realmInstance.objects('User')[0];
     const userID = user?.userID;
 
@@ -81,17 +76,43 @@ export const fetchData = async () => {
       const oldContacts = realmInstance.objects('EmergencyContact');
       realmInstance.delete(oldContacts);
 
-      contactData.forEach(item => {
+      contactData.forEach((contact) => {
         realmInstance.create('EmergencyContact', {
-          ...item,
-          contactID: parseInt(item.contactID, 10),
-          number: parseInt(item.number, 10),
+          contactID: contact.contactID,
+          name: contact.name,
+          number: contact.number,
         });
       });
     });
 
-    console.log('Data stored in Realm:', contactData);
+    console.log('Emergency contact data saved to Realm:', contactData);
+
+    const company = realmInstance.objects('Company')[0];
+    const companyID = company?.companyID;
+
+    if (!companyID) {
+      console.error('No company ID found in Realm');
+      return;
+    }
+
+    const companyContactURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${encodeURIComponent(companyID)}/Contact-local`;
+
+    const companyContactResponse = await fetch(companyContactURL);
+    const companyContactData = await companyContactResponse.json();
+
+    realmInstance.write(() => {
+      companyContactData.forEach((contact) => {
+        realmInstance.create('EmergencyContact', {
+          contactID: contact.contactID,
+          name: contact.name,
+          number: contact.number,
+        });
+      });
+    });
+
+    
+    console.log('Emergency contact data saved to Realm:', companyContactData);
   } catch (error) {
-    console.error('Error fetching Contact:', error);
+    console.error('Error fetching emergency contact data:', error);
   }
 };

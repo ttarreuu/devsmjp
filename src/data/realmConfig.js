@@ -70,11 +70,10 @@ const CheckpointSchema = {
 
 const EmergencyContactSchema = {
   name: 'EmergencyContact', 
-  primaryKey: 'contactID',
   properties: {
+    contactID: 'string',
     name: 'string',
     number: 'int',
-    contactID: 'int',
   },
 };
 

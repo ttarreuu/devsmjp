@@ -1,6 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
-import Addcall from '../../assets/call.svg'; 
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+  FlatList,
+} from 'react-native';
+import Addcall from '../../assets/call.svg';
 import realmInstance from '../../data/realmConfig';
 
 export default function EmergencyScreen() {
@@ -25,51 +32,59 @@ export default function EmergencyScreen() {
     getEmergencyContacts();
   }, []);
 
-  const makeCall = (number) => {
+  const makeCall = number => {
     Linking.openURL(`tel:${number}`);
   };
 
+  const renderItem = ({item}) => (
+    <View style={styles.card}>
+      <Text style={styles.contactText}>{item.name}</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => makeCall(item.number)}>
+        <Addcall height={20} width={20} />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      {contacts.map(contact => (
-        <View key={contact.id} style={styles.card}>
-          <Text style={styles.contactText}>{contact.name}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => makeCall(contact.number)}>
-            <Addcall height={20} width={20} />
-          </TouchableOpacity>
-        </View>
-      ))}
+      <FlatList
+        data={contacts}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
     backgroundColor: '#f5f5f5',
-    marginTop: 50
+    marginTop: 50,
   },
-  card: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'flex-start', 
-    padding: 15, 
-    marginVertical: 10, 
-    borderRadius: 10, 
-    backgroundColor: '#fff', 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.2, 
-    shadowRadius: 2, 
-    elevation: 2 
+  listContent: {
+    paddingBottom: 20,
   },
-  contactText: { 
+  card: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+  },
+  contactText: {
     fontSize: 14,
     fontFamily: 'Poppins-Bold',
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
-  button: { 
-    padding: 10 
-  }
+  button: {
+    padding: 10,
+  },
 });
