@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const sendDataTrackingToApi = async (newData) => {
   try {
-    const AttendanceID = await AsyncStorage.getItem('attendanceID');
+    const AttendanceID = await AsyncStorage.getItem('realmId');
     if (!AttendanceID) {
       console.error('AttendanceID not found in AsyncStorage');
       return;

@@ -1,72 +1,78 @@
 import Realm from 'realm';
 
+const LogSchema = {
+  name: 'Log',
+  primaryKey: 'attendanceID',
+  properties: {
+    attendanceID: 'string',
+    startDateTime: 'string',
+    startPicture: 'string',
+    endDateTime: 'string',
+    endPicture: 'string',
+    LogTracking: 'LogTracking[]',
+  }
+};
+
 const LogTrackingSchema = {
   name: 'LogTracking',
-  primaryKey: 'id',
   properties: {
-    id: 'int',
     dateTime: 'date',
     latitude: 'double',
     longitude: 'double',
     altitude: 'double',
     speed: 'double',
     accuracy: 'double',
-  },
-};
-
-
-const LogTrackingTempSchema = {
-  name: 'LogTrackingTemp',
-  primaryKey: 'id',
-  properties: {
-    id: 'int',
-    dateTime: 'date',
-    latitude: 'double',
-    longitude: 'double',
-    altitude: 'double',
-    speed: 'double',
-    accuracy: 'double',
-  },
-};
-
-const LogPatrolSchema = {
-  name: 'LogPatrol',
-  primaryKey: 'id',
-  properties: {
-    id: 'int',
-    dateTime: 'date',
-    picture: 'string',
-    situationType: 'string',
-    description: 'string',
-    checkpointID: 'string',
-    method: 'string',
   }
 };
 
-const LogPatrolTempSchema = {
-  name: 'LogPatrolTemp',
-  primaryKey: 'id',
-  properties: {
-    id: 'int',
-    dateTime: 'date',
-    picture: 'string',
-    situationType: 'string',
-    description: 'string',
-    checkpointID: 'string',
-    method: 'string',
-  }
-};
 
-const CheckpointSchema = {
-  name: 'Checkpoint',
-  properties: {
-    name: 'string',
-    latitude: 'double',
-    longitude: 'double',
-    radius: 'int',
-    checkpointID: 'string',
-  },
-};
+{/*
+
+  const LogTrackingTempSchema = {
+    name: 'LogTrackingTemp',
+    primaryKey: 'id',
+    properties: {
+      id: 'int',
+      attendanceID: 'string',
+      dateTime: 'date',
+      latitude: 'double',
+      longitude: 'double',
+      altitude: 'double',
+      speed: 'double',
+      accuracy: 'double',
+    },
+  };
+  
+  const LogPatrolSchema = {
+    name: 'LogPatrol',
+    primaryKey: 'id',
+    properties: {
+      id: 'int',
+      dateTime: 'date',
+      picture: 'string',
+      situationType: 'string',
+      description: 'string',
+      checkpointID: 'string',
+      method: 'string',
+    }
+  };
+  
+  const LogPatrolTempSchema = {
+    name: 'LogPatrolTemp',
+    primaryKey: 'id',
+    properties: {
+      id: 'int',
+      dateTime: 'date',
+      picture: 'string',
+      situationType: 'string',
+      description: 'string',
+      checkpointID: 'string',
+      method: 'string',
+    }
+  };
+
+*/}
+
 
 const EmergencyContactSchema = {
   name: 'EmergencyContact', 
@@ -88,6 +94,17 @@ const ScheduleSchema = {
     timeEnd: 'string',
     checkpoint: 'string[]', 
   }
+};
+
+const CheckpointSchema = {
+  name: 'Checkpoint',
+  properties: {
+    name: 'string',
+    latitude: 'double',
+    longitude: 'double',
+    radius: 'int',
+    checkpointID: 'string',
+  },
 };
 
 const UserSchema = {
@@ -114,20 +131,8 @@ const CompanySchema = {
   },
 };
 
-const AttendanceSchema = {
-  name: 'Attendance',
-  properties: {
-    attendanceID: 'string',
-    startDateTime: 'string',
-    endDateTime: 'string',
-    startPicture: 'string',
-    endPicture: 'string',
-    status: 'bool', 
-  },
-};
-
 const realmInstance = new Realm({
-  schema: [LogTrackingTempSchema, LogPatrolTempSchema, LogPatrolSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema, AttendanceSchema],
+  schema: [LogSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema],
   path: 'log_temp.realm', 
 });
 
