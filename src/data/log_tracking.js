@@ -1,77 +1,98 @@
-import realmInstance from './realmConfig'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { realmInstance } from './realm_config';  
 
-const getNextId = () => {
-  const logs = realmInstance.objects('LogTracking');
-  if (logs.length > 0) {
-    return logs.max('id') + 1;
-  }
-  return 1; 
-};
-
-export const saveLog = (dateTime, latitude, longitude, altitude, speed, accuracy) => {
+export const addLogTracking = async (logTrackingData) => {
   try {
-    const id = getNextId(); 
+    const attendanceID = await AsyncStorage.getItem('attendanceID');
+    if (!attendanceID) {
+      throw new Error('Attendance ID not found in AsyncStorage');
+    }
+
+    const log = realmInstance.objects('Log').filtered('attendanceID == $0', attendanceID)[0];
+    if (!log) {
+      throw new Error('Log not found for the given attendanceID');
+    }
+
     realmInstance.write(() => {
-      realmInstance.create('LogTracking', {
-        id,
-        dateTime,
-        longitude,
-        latitude,
-        altitude,
-        speed,
-        accuracy
-      });
+      log.LogTracking.push(logTrackingData);
     });
-    console.log('Log saved:', { id, latitude, longitude, dateTime });
+
+    console.log('LogTracking data added successfully');
   } catch (error) {
-    console.error('Error saving log:', error);
+    console.error('Error adding LogTracking data:', error);
   }
 };
 
-export const getAllLogs = () => {
+export const addLogTrackingTemp = async (logTrackingTempData) => {
   try {
-    const logs = realmInstance.objects('LogTracking');
-    return logs.map(log => ({
-      id: log.id,
-      dateTime: log.dateTime,
-      latitude: log.latitude,
-      longitude: log.longitude,
-      altitude: log.altitude,
-      speed: log.speed,
-      accuracy: log.accuracy,
-    }));
-  } catch (error) {
-    console.error('Error fetching logs:', error);
-    return [];
-  }
-};
+    const attendanceID = await AsyncStorage.getItem('attendanceID');
+    if (!attendanceID) {
+      throw new Error('Attendance ID not found in AsyncStorage');
+    }
 
-export const deleteLogById = (id) => {
-  try {
+    const log = realmInstance.objects('Log').filtered('attendanceID == $0', attendanceID)[0];
+    if (!log) {
+      throw new Error('Log not found for the given attendanceID');
+    }
+
     realmInstance.write(() => {
-      const log = realmInstance.objectForPrimaryKey('LogTracking', id);
-      if (log) {
-        realmInstance.delete(log);
-        console.log('Log deleted:', id);
-      } else {
-        console.log('Log not found:', id);
+      log.LogTrackingTemp.push(logTrackingTempData);
+    });
+
+    console.log('LogTrackingTemp data added successfully');
+  } catch (error) {
+    console.error('Error adding LogTrackingTemp data:', error);
+  }
+};
+
+export const getOldestLogTrackingTempAndStoreToAPI = async () => {
+  try {
+    const attendanceID = await AsyncStorage.getItem('attendanceID');
+    if (!attendanceID) {
+      throw new Error('Attendance ID not found in AsyncStorage');
+    }
+
+    const log = realmInstance.objects('Log').filtered('attendanceID == $0', attendanceID)[0];
+    if (!log) {
+      throw new Error('Log not found for the given attendanceID');
+    }
+
+    if (log.LogTrackingTemp.length === 0) {
+      console.log('No LogTrackingTemp data available');
+      return;
+    }
+
+    const oldestData = log.LogTrackingTemp.sorted('dateTime')[0];
+    console.log('Oldest LogTrackingTemp:', oldestData);
+
+    const response = await fetch('https://your-api-endpoint.com/your-api-route', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        dateTime: oldestData.dateTime,
+        latitude: oldestData.latitude,
+        longitude: oldestData.longitude,
+        altitude: oldestData.altitude,
+        speed: oldestData.speed,
+        accuracy: oldestData.accuracy,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send data to API');
+    }
+
+    realmInstance.write(() => {
+      const index = log.LogTrackingTemp.indexOf(oldestData);
+      if (index !== -1) {
+        log.LogTrackingTemp.splice(index, 1); 
       }
     });
+
+    console.log('Oldest data sent to API and removed from LogTrackingTemp');
   } catch (error) {
-    console.error('Error deleting log:', error);
+    console.error('Error retrieving and sending LogTrackingTemp data:', error);
   }
 };
-
-export const deleteAllLogs = () => {
-  try {
-    realmInstance.write(() => {
-      const allLogs = realmInstance.objects('LogTracking');
-      realmInstance.delete(allLogs);
-    });
-    console.log('All logs deleted.');
-  } catch (error) {
-    console.error('Error deleting all logs:', error);
-  }
-};
-
-export const getRealmInstance = () => realmInstance;

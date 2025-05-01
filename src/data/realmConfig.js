@@ -10,11 +10,24 @@ const LogSchema = {
     endDateTime: 'string',
     endPicture: 'string',
     LogTracking: 'LogTracking[]',
+    LogTrackingTemp: 'LogTrackingTemp[]'
   }
 };
 
 const LogTrackingSchema = {
   name: 'LogTracking',
+  properties: {
+    dateTime: 'date',
+    latitude: 'double',
+    longitude: 'double',
+    altitude: 'double',
+    speed: 'double',
+    accuracy: 'double',
+  }
+};
+
+const LogTrackingTempSchema = {
+  name: 'LogTrackingTemp',
   properties: {
     dateTime: 'date',
     latitude: 'double',
@@ -132,7 +145,7 @@ const CompanySchema = {
 };
 
 const realmInstance = new Realm({
-  schema: [LogSchema, LogTrackingSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema],
+  schema: [LogSchema, LogTrackingSchema, LogTrackingTempSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema],
   path: 'log_temp.realm', 
 });
 
