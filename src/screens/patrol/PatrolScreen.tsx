@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Mapbox, { MapView, Camera, ShapeSource, LineLayer, PointAnnotation } from "@rnmapbox/maps";
-import Geolocation from "react-native-geolocation-service";
 import { Camera as VisionCamera, useCameraDevice, useCodeScanner } from "react-native-vision-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAllTempLogs } from "../../data/log_tracking_temp";
 import realmInstance from "../../data/realmConfig";
 import { useNavigation } from '@react-navigation/native'; 
 import GPSIcon from '../../assets/gps-icon.svg';
@@ -52,23 +50,8 @@ const PatrolScreen = () => {
   useEffect(() => {
     readStatus();
     readPatrolStatus();
-    setLogData(getAllTempLogs());
     fetchCheckpoints();    
-    const watchId = Geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setCurrentLocation({ latitude, longitude });
-        if (isAttendance) {
-          checkProximity(latitude, longitude);
-        }
-      },
-      (error) => console.error("Error watching position:", error),
-      { enableHighAccuracy: true, distanceFilter: 1, interval: 1000, fastestInterval: 500 }
-    );
     
-    return () => {
-      if (watchId) Geolocation.clearWatch(watchId);
-    };
   }, [isAttendance]);
 
   useEffect(() => {
@@ -110,7 +93,7 @@ const PatrolScreen = () => {
       }
     });
 
-    if (nearest) { // Check if nearest is not null
+    if (nearest) {
       setNearestCheckpoint(nearest);
       setIsCheckIn(true);
     } else {
@@ -134,7 +117,7 @@ const PatrolScreen = () => {
     type: "Feature",
     geometry: {
       type: "LineString",
-      coordinates: logData.map(log => [log.longitude, log.latitude]),
+      coordinates: setLogData.map(log => [log.longitude, log.latitude]),
     },
   });
 
