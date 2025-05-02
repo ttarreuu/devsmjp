@@ -20,6 +20,7 @@ import FetchIcon from '../assets/fetch-data.svg';
 import MapsIcon from '../assets/download-maps.svg';
 import CustomAlert from '../components/CustomAlert'; 
 import {useNavigation} from '@react-navigation/native';
+import { requestMultiplePermissions } from '../setup/permission';
 
 const ProfileScreen = () => {
   const [user, setUser] = useState(null);
@@ -113,6 +114,11 @@ const handleLogout = async () => {
     setAlertVisible(false);
   };
 
+  const handleCheckPermissions = async () => {
+    await requestMultiplePermissions();
+  };
+
+  
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {user && (
@@ -154,6 +160,14 @@ const handleLogout = async () => {
           <Text style={styles.buttonText}>
             {loadingData ? 'Fetching Data...' : 'Fetch Data'}
           </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.button, styles.backgroundButton]}
+          onPress={handleCheckPermissions}>
+          <Text style={styles.buttonText}>Check Permissions</Text>
         </TouchableOpacity>
       </View>
 

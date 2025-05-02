@@ -1,64 +1,84 @@
-import { PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid, Platform, Alert } from 'react-native';
 
-async function requestMultiplePermissions() {
-    try {
-        const permissions = [
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-            PermissionsAndroid.PERMISSIONS.CAMERA,
-            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ];
+export const requestMultiplePermissions = async () => {
+  if (Platform.OS === 'android') {
+    const apiLevel = Platform.Version;
 
-        // Add ACCESS_BACKGROUND_LOCATION only for Android 10 (API level 29) and above
-        if (Platform.Version >= 29) {
-            permissions.push(PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION);
-        }
+    const legacyStoragePermissions = [
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    ];
 
-        // Add POST_NOTIFICATIONS only for Android 13 (API level 33) and above
-        if (Platform.Version >= 33) {
-            permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-        }
+    const scopedStoragePermissions = [
+      PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+      PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+      PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+    ];
 
-        // Request permissions
-        const granted = await PermissionsAndroid.requestMultiple(permissions);
+    const permissions = [
+      PermissionsAndroid.PERMISSIONS.INTERNET,
+      PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.FOREGROUND_SERVICE,
+      PermissionsAndroid.PERMISSIONS.VIBRATE,
+      PermissionsAndroid.PERMISSIONS.RECEIVE_BOOT_COMPLETED,
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      PermissionsAndroid.PERMISSIONS.WAKE_LOCK,
+      PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      PermissionsAndroid.PERMISSIONS.NFC,
+      ...(apiLevel >= 33 ? scopedStoragePermissions : legacyStoragePermissions),
+    ];
 
-        // Check each permission
-        const locationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-        const coarseLocationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-        const cameraGranted = granted[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED;
-        const readStorageGranted = granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
-        const writeStorageGranted = granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
+    const runtimePermissions = [];
 
-        let backgroundLocationGranted = true; // Default true for versions below 29
-        if (Platform.Version >= 29) {
-            backgroundLocationGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-        }
+    // Skip certain permissions based on Android version
+    for (const permission of permissions) {
+      if (permission === PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION && apiLevel < 29) continue;
+      if (permission === PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS && apiLevel < 33) continue;
 
-        let notificationsGranted = true; // Default true for versions below 33
-        if (Platform.Version >= 33) {
-            notificationsGranted = granted[PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS] === PermissionsAndroid.RESULTS.GRANTED;
-        }
+      if (
+        permission === PermissionsAndroid.PERMISSIONS.INTERNET ||
+        permission === PermissionsAndroid.PERMISSIONS.FOREGROUND_SERVICE ||
+        permission === PermissionsAndroid.PERMISSIONS.VIBRATE ||
+        permission === PermissionsAndroid.PERMISSIONS.RECEIVE_BOOT_COMPLETED ||
+        permission === PermissionsAndroid.PERMISSIONS.WAKE_LOCK ||
+        permission === PermissionsAndroid.PERMISSIONS.NFC
+      ) {
+        continue;
+      }
 
-        if (
-            locationGranted &&
-            coarseLocationGranted &&
-            cameraGranted &&
-            readStorageGranted &&
-            writeStorageGranted &&
-            backgroundLocationGranted &&
-            notificationsGranted
-        ) {
-            console.log('All requested permissions granted');
-            return true;
-        } else {
-            console.log('One or more permissions denied');
-            return false;
-        }
-    } catch (err) {
-        console.warn('Permission request error:', err);
-        return false;
+      runtimePermissions.push(permission);
     }
-}
 
-export default requestMultiplePermissions;
+    try {
+      const results = await PermissionsAndroid.requestMultiple(runtimePermissions);
+
+      console.log('Permission check results:');
+      Object.entries(results).forEach(([permission, status]) => {
+        const statusText =
+          status === PermissionsAndroid.RESULTS.GRANTED ? 'GRANTED' :
+          status === PermissionsAndroid.RESULTS.DENIED ? 'DENIED' :
+          status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ? 'NEVER_ASK_AGAIN' :
+          'UNKNOWN';
+        console.log(`${permission}: ${statusText}`);
+      });
+
+      const denied = Object.entries(results).filter(
+        ([_, status]) => status !== PermissionsAndroid.RESULTS.GRANTED
+      );
+
+      if (denied.length > 0) {
+        console.warn('These permissions were NOT granted:');
+        denied.forEach(([permission, status]) => {
+          const reason = status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ? 'Blocked (Never Ask Again)' : 'Denied';
+          console.warn(`- ${permission}: ${reason}`);
+        });
+
+        Alert.alert('Warning', 'Some permissions were denied and the app may not function properly.');
+      }
+    } catch (error) {
+      console.error('Permission request error:', error);
+    }
+  }
+};
