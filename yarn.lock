@@ -6493,6 +6493,11 @@ react-native-crypto-js@^1.0.0:
   resolved "https://registry.npmjs.org/react-native-crypto-js/-/react-native-crypto-js-1.0.0.tgz"
   integrity sha512-FNbLuG/HAdapQoybeZSoes1PWdOj0w242gb+e1R0hicf3Gyj/Mf8M9NaED2AnXVOX01b2FXomwUiw1xP1K+8sA==
 
+react-native-device-info@^14.0.4:
+  version "14.0.4"
+  resolved "https://registry.yarnpkg.com/react-native-device-info/-/react-native-device-info-14.0.4.tgz#56b24ace9ff29a66bdfc667209086421ed6cfdce"
+  integrity sha512-NX0wMAknSDBeFnEnSFQ8kkAcQrFHrG4Cl0mVjoD+0++iaKrOupiGpBXqs8xR0SeJyPC5zpdPl4h/SaBGly6UxA==
+
 react-native-dropdown-picker@^5.4.6:
   version "5.4.6"
   resolved "https://registry.yarnpkg.com/react-native-dropdown-picker/-/react-native-dropdown-picker-5.4.6.tgz#3736fc468de4a295e4df8d1f65ed2eadaf9b445f"
@@ -6540,6 +6545,11 @@ react-native-keychain@^9.2.2:
   version "9.2.2"
   resolved "https://registry.npmjs.org/react-native-keychain/-/react-native-keychain-9.2.2.tgz"
   integrity sha512-sATwVC76fEl4fsdBsgzG6lwhUhKduK0yqPBKHQRrJlv/2/HFBLXc4yLk9SKnZdgVHCpBxIEX4obMyMcu3HBh9w==
+
+react-native-network-speed@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/react-native-network-speed/-/react-native-network-speed-1.1.2.tgz#9b89dacaa403adfe7555a85c8c0b2e22e40f9342"
+  integrity sha512-ne2jcv2ooBrBhJnLWZ5fcGYPMF5hNNKlsISXU8IqsCb2LPc2i7molR0WX68WcKFsCiTnon5QcW/SsA5m41CYFA==
 
 react-native-nfc-manager@^3.16.1:
   version "3.16.1"
