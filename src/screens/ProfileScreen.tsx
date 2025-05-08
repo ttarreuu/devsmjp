@@ -23,10 +23,9 @@ import {requestMultiplePermissions} from '../setup/permission';
 import NetInfo from '@react-native-community/netinfo';
 import DeviceInfo from 'react-native-device-info';
 import Popup from '../components/Popup';
-import networkSpeed from 'react-native-network-speed';
 
 const ProfileScreen = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [companyName, setCompanyName] = useState('');
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -41,7 +40,6 @@ const ProfileScreen = () => {
   const [popupData, setPopupData] = useState<
     {[key: string]: string | number}[]
   >([]);
-
 
   const navigation = useNavigation();
 
@@ -131,27 +129,6 @@ const ProfileScreen = () => {
     const offset = -new Date().getTimezoneOffset() / 60;
     const formattedOffset = offset >= 0 ? `+${offset}` : `${offset}`;
 
-    // Manual download speed test
-    const testDownloadSpeed = async () => {
-      const testUrl = 'https://speed.hetzner.de/100MB.bin'; // A large test file
-      const startTime = new Date().getTime();
-      try {
-        const response = await fetch(testUrl, {
-          method: 'GET',
-          headers: {Range: 'bytes=0-500000'},
-        });
-        const endTime = new Date().getTime();
-        const durationInSeconds = (endTime - startTime) / 1000;
-        const fileSizeInBits = 500000 * 8;
-        const speedKbps = fileSizeInBits / durationInSeconds / 1000;
-        return `${speedKbps.toFixed(2)} kbps`;
-      } catch (error) {
-        return 'Speed test failed';
-      }
-    };
-
-    const downloadSpeed = await testDownloadSpeed();
-
     const deviceData = [
       {Key: 'Device ID', Value: deviceId},
       {Key: 'Model', Value: model},
@@ -168,7 +145,6 @@ const ProfileScreen = () => {
           isCharging ? 'Charging' : 'Not Charging'
         })`,
       },
-      {Key: 'Download Speed', Value: downloadSpeed},
     ];
 
     setPopupTitle('Device Information');
@@ -233,19 +209,20 @@ const ProfileScreen = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, styles.backgroundButton]}
-          onPress={handleLogout}>
-          <LogoutIcon width={40} height={40} />
-          <Text style={styles.buttonText}>Logout</Text>
+          onPress={handleDeviceInfo}>
+          <Text style={styles.buttonText}>Device Info</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, styles.backgroundButton]}
-          onPress={handleDeviceInfo}>
-          <Text style={styles.buttonText}>Device Info</Text>
+          onPress={handleLogout}>
+          <LogoutIcon width={40} height={40} />
+          <Text style={styles.buttonText}>Logout</Text>
         </TouchableOpacity>
       </View>
+
 
       <CustomAlert
         visible={alertVisible}
