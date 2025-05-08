@@ -1,4 +1,3 @@
-// components/Popup.tsx
 import React from 'react';
 import {
   Modal,
@@ -7,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 
 interface TableAlertProps {
@@ -18,12 +18,21 @@ interface TableAlertProps {
 
 const Popup: React.FC<TableAlertProps> = ({visible, title, data, onClose}) => {
   const keys = data.length > 0 ? Object.keys(data[0]) : [];
+  const screenWidth = Dimensions.get('window').width;
+  const cellWidth = 145; // Or adjust dynamically
+  const tableWidth = cellWidth * keys.length;
 
   return (
     <Modal transparent visible={visible} animationType="slide">
       <View style={styles.overlay}>
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View
+          style={[
+            styles.container,
+            {width: Math.min(tableWidth + 40, screenWidth * 0.95)},
+          ]}>
+          <Text style={styles.title}>{title}</Text>
+
+          <ScrollView horizontal>
             <View>
               {data.map((item, index) => (
                 <View style={styles.row} key={`row-${index}`}>
@@ -37,11 +46,11 @@ const Popup: React.FC<TableAlertProps> = ({visible, title, data, onClose}) => {
                 </View>
               ))}
             </View>
-
-            <TouchableOpacity style={styles.button} onPress={onClose}>
-              <Text style={styles.buttonText}>OK</Text>
-            </TouchableOpacity>
           </ScrollView>
+
+          <TouchableOpacity style={styles.button} onPress={onClose}>
+            <Text style={styles.buttonText}>OK</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -57,15 +66,9 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: 'white',
-    width: '90%',
     maxHeight: '90%',
     padding: 20,
     borderRadius: 10,
-    overflow: 'hidden', // Prevent horizontal overflow
-  },
-  scrollContainer: {
-    alignItems: 'center',
-    flexDirection: 'column', // Ensure vertical stacking
   },
   title: {
     fontFamily: 'Poppins-Bold',
@@ -94,6 +97,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 5,
+    alignSelf: 'center',
   },
   buttonText: {
     color: 'white',
