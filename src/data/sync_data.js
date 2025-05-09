@@ -1,4 +1,5 @@
 import realmInstance from './realmConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const fetchData = async () => {
   try {
@@ -105,14 +106,21 @@ export const fetchData = async () => {
         realmInstance.create('EmergencyContact', {
           contactID: contact.contactID,
           name: contact.name,
-          number: contact.number,
+          number: contact.number.startsWith('0') ? contact.number : '0' + contact.number,
         });
       });
     });
 
-    
     console.log('Emergency contact data saved to Realm:', companyContactData);
   } catch (error) {
     console.error('Error fetching emergency contact data:', error);
+  }
+
+  try {
+    const currentDateTime = new Date().toISOString();
+    await AsyncStorage.setItem('lastUpdateFetch', currentDateTime);
+    console.log('Current Date-Time stored in AsyncStorage:', currentDateTime);
+  } catch (error) {
+    console.error('Error storing current Date-Time in AsyncStorage:', error);
   }
 };

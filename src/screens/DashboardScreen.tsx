@@ -6,6 +6,7 @@ import {
   StyleSheet,
   FlatList,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import {menuData} from '../data/menu_data';
 import realmInstance from '../data/realmConfig';
@@ -13,10 +14,14 @@ import realmInstance from '../data/realmConfig';
 export default function DashboardScreen({navigation}) {
   const [user, setUser] = useState(null);
   const [companyName, setCompanyName] = useState(null);
+  const {width} = useWindowDimensions();
+
+  const MIN_CARD_WIDTH = 150;
+  const numColumns = Math.floor(width / MIN_CARD_WIDTH);
 
   useEffect(() => {
     const realmUser = realmInstance.objects('User')[0];
-    const realmCompany = realmInstance.objects('Company')[0]; // Get the first company
+    const realmCompany = realmInstance.objects('Company')[0];
     if (realmUser) {
       setUser(realmUser);
     }
@@ -25,17 +30,18 @@ export default function DashboardScreen({navigation}) {
     }
   }, []);
 
-
   const renderMenuItem = ({item}) => {
     const IconComponent = item.icon;
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate(item.route)}>
-        <IconComponent width={65} height={65} />
-        <Text style={styles.cardText}>{item.name}</Text>
-      </TouchableOpacity>
+      <View style={[styles.cardContainer, {width: `${100 / numColumns}%`}]}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate(item.route)}>
+          <IconComponent width={65} height={65} />
+          <Text style={styles.cardText}>{item.name}</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -61,7 +67,8 @@ export default function DashboardScreen({navigation}) {
         data={menuData}
         renderItem={renderMenuItem}
         keyExtractor={item => item.route}
-        numColumns={2}
+        numColumns={numColumns}
+        key={numColumns} 
         contentContainerStyle={{paddingTop: 10}}
       />
     </View>
@@ -86,7 +93,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 30,
     marginRight: 15,
-    marginLeft: 10
+    marginLeft: 10,
   },
   name: {
     fontSize: 14,
@@ -94,28 +101,30 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     color: '#333',
     textAlign: 'right',
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
   },
   email: {
     fontSize: 12,
     color: '#666',
     fontFamily: 'Poppins-Regular',
-    textAlign: 'right'
+    textAlign: 'right',
+  },
+  cardContainer: {
+    padding: 5,
   },
   card: {
-    flex: 1,
-    margin: 10,
-    padding: 10,
     backgroundColor: '#f2f2f2',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    maxWidth: '45%'
+    aspectRatio: 1.5, 
+    width: '100%',
   },
   cardText: {
     fontSize: 14,
     marginTop: 3,
     fontFamily: 'Poppins-SemiBold',
-    color: '#4b4b4b'
+    color: '#4b4b4b',
+    textAlign: 'center',
   },
 });

@@ -1,15 +1,28 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform, Alert } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
+
 import PersonIcon from '../assets/person-login.svg';
 import FingerPrintIcon from '../assets/finger-print.svg';
 import UserIcon from '../assets/user-icon.svg';
 import PwIcon from '../assets/pw-icon.svg';
 import HiddenPwIcon from '../assets/hidden-pw.svg';
 import UnhidePwIcon from '../assets/unhide-pw.svg';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchData } from '../data/sync_data';
-import { downloadMapboxOfflineRegion } from '../components/Maps';
+import {fetchData} from '../data/sync_data';
+import {downloadMapboxOfflineRegion} from '../components/Maps';
 import realmInstance from '../data/realmConfig';
 
 export default function LoginScreen() {
@@ -17,20 +30,24 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
+  const {width, height} = useWindowDimensions();
+  const isLandscape = width > height;
+
   useEffect(() => {
     const checkLoginStatus = async () => {
-    const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
-            navigation.navigate('MainTabs');
-        }
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        navigation.navigate('MainTabs');
+      }
     };
     checkLoginStatus();
   }, []);
 
   const handleLogin = async () => {
     try {
-      const res = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/user');
+      const res = await fetch(
+        'https://672fc91b66e42ceaf15eb4cc.mockapi.io/user',
+      );
       const users = await res.json();
       const trimmedUsername = username.trim();
       const trimmedPassword = password.trim();
@@ -65,15 +82,13 @@ export default function LoginScreen() {
 
         if (userCompany) {
           realmInstance.write(() => {
-            realmInstance.create(
-              'Company',
-              {
-                companyID: userCompany.companyID,
-                name: userCompany.name,
-                Lat: userCompany.Lat,
-                Long: userCompany.Long,
-                radius: userCompany.radius,
-              });
+            realmInstance.create('Company', {
+              companyID: userCompany.companyID,
+              name: userCompany.name,
+              Lat: userCompany.Lat,
+              Long: userCompany.Long,
+              radius: userCompany.radius,
+            });
           });
 
           await AsyncStorage.setItem('company', JSON.stringify(userCompany));
@@ -97,24 +112,20 @@ export default function LoginScreen() {
     }
   };
 
-
-
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+  const content = (
+    <ScrollView scrollEnabled={false}>
+      <View style={styles.centeredContent}>
         <PersonIcon height={300} width={300} />
-        
         <View style={styles.fingerprintContainer}>
           <FingerPrintIcon width={45} height={45} />
           <View style={styles.fingerprintTextContainer}>
             <Text style={styles.fingerprintText}>Login</Text>
-            <Text style={styles.fingerprintSubText}>Input your registered username and password!</Text>
+            <Text style={styles.fingerprintSubText}>
+              Input your registered username and password!
+            </Text>
           </View>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <UserIcon width={15} height={15} />
           <TextInput
@@ -124,9 +135,9 @@ export default function LoginScreen() {
             onChangeText={setUsername}
           />
         </View>
-        
+
         <View style={styles.inputContainer}>
-          <PwIcon width={20} height={20} />
+          <PwIcon width={15} height={20} />
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -134,21 +145,35 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
           />
-          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-            {isPasswordVisible ? <UnhidePwIcon width={20} height={20} /> : <HiddenPwIcon width={20} height={20} />}
+          <TouchableOpacity
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+            {isPasswordVisible ? (
+              <UnhidePwIcon width={20} height={20} />
+            ) : (
+              <HiddenPwIcon width={20} height={20} />
+            )}
           </TouchableOpacity>
         </View>
-        
+
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.forgotPasswordContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
+    </ScrollView>
+  );
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}>
+      {isLandscape ? <ScrollView>{content}</ScrollView> : content}
     </KeyboardAvoidingView>
   );
 }
@@ -157,13 +182,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    // marginTop: -50,
+    // justifyContent: 'center',
   },
-  scrollContainer: {
+  centeredContent: {
+    flex: 1,
     alignItems: 'center',
-    // flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 35,
+    paddingHorizontal: 20,
   },
   fingerprintContainer: {
     flexDirection: 'row',
@@ -171,14 +195,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 20,
     marginTop: -50,
+    width: '90%',
+    maxWidth: 300,
   },
   fingerprintTextContainer: {
     marginLeft: 10,
+    maxWidth: '80%'
   },
   fingerprintText: {
     fontSize: 16,
     fontFamily: 'Poppins-Bold',
-    color: '#1185C8', 
+    color: '#1185C8',
   },
   fingerprintSubText: {
     marginTop: -5,
@@ -196,7 +223,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 10,
     marginVertical: 10,
-    width: '100%',
+    width: '90%',
+    maxWidth: 350,
   },
   input: {
     flex: 1,
@@ -208,7 +236,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
     alignItems: 'center',
-    width: '100%',
+    width: '90%',
+    maxWidth: 350,
   },
   loginText: {
     color: '#fff',
@@ -216,7 +245,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
   },
   forgotPasswordContainer: {
-    width: '100%',
+    width: '90%',
+    maxWidth: 350,
     alignItems: 'flex-end',
     marginTop: 10,
   },
@@ -225,6 +255,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Poppins-Medium',
     textDecorationLine: 'underline',
+    marginBottom: 50
   },
 });
-

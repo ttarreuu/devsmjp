@@ -92,7 +92,7 @@ const EmergencyContactSchema = {
   properties: {
     contactID: 'string',
     name: 'string',
-    number: 'int',
+    number: 'string',
   },
 };
 

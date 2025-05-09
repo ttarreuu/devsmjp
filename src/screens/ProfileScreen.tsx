@@ -40,6 +40,8 @@ const ProfileScreen = () => {
   const [popupData, setPopupData] = useState<
     {[key: string]: string | number}[]
   >([]);
+  
+  const [lastUpdateFetch, setLastUpdateFetch] = useState<string>('');
 
   const navigation = useNavigation();
 
@@ -192,9 +194,8 @@ const ProfileScreen = () => {
           onPress={handleFetchData}
           disabled={loadingData}>
           <FetchIcon width={40} height={40} />
-          <Text style={styles.buttonText}>
-            {loadingData ? 'Fetching Data...' : 'Fetch Data'}
-          </Text>
+          <Text style={styles.buttonText}>Fetch Data</Text>
+          <Text style={styles.progressTextRight}></Text>
         </TouchableOpacity>
       </View>
 
@@ -223,7 +224,6 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </View>
 
-
       <CustomAlert
         visible={alertVisible}
         title={alertTitle}
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
+    // justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
@@ -278,20 +279,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Bold',
     color: '#007AFF',
   },
   buttonContainer: {
     marginTop: 5,
-    width: '90%',
+    width: '100%',
+    alignItems: 'flex-start',
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     borderRadius: 5,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-start', 
     height: 50,
+    minWidth: '50%', 
     position: 'relative',
   },
   backgroundButton: {
