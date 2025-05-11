@@ -8,10 +8,10 @@ SMJP is an Android-based application developed for security personnel working in
 - ![Project Screenshot 3](link_to_image_3.png)
 
 #### Tech Stack
-- **React Native** ![React Native Icon](https://img.icons8.com/ios/50/000000/react-native.png): Cross-platform mobile app development framework.
-- **Mapbox** ![Mapbox Icon](https://img.icons8.com/ios/50/000000/mapbox.png): For satellite map visualizations and location tracking.
-- **Realm DB** ![Realm DB Icon](https://img.icons8.com/ios/50/000000/realm.png): Local database for offline data storage.
-- **NFC and QR Code Scanner** ![NFC Icon](https://img.icons8.com/ios/50/000000/nfc.png) ![QR Code Icon](https://img.icons8.com/ios/50/000000/qr-code.png): For security and identification purposes.
+- **React Native**: Cross-platform mobile app development framework.
+- **Mapbox**: For satellite map visualizations and location tracking.
+- **Realm DB**: Local database for offline data storage.
+- **NFC and QR Code Scanner**: For security and identification purposes.
 
 #### Features
 - **Attendance Tracking**: Log attendance of security personnel.
