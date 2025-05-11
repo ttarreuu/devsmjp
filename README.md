@@ -1,14 +1,14 @@
-### SMJP
+# SMJP
 
 SMJP is an Android-based application developed for security personnel working in refinery areas to enhance work efficiency and effectiveness. The app is fully functional offline and includes features such as attendance tracking, patrol logging, user collaboration, and location tracking. It has been designed to support security operations in challenging environments, especially with limited or no internet connectivity.
 
-#### Tech Stack
+## Tech Stack
 - **React Native**: Cross-platform mobile app development framework.
 - **Mapbox**: For satellite map visualizations and location tracking.
 - **Realm DB**: Local database for offline data storage.
 - **NFC and QR Code Scanner**: For security and identification purposes.
 
-#### Features
+## Features
 - **Attendance Tracking**: Log attendance of security personnel.
 - **Patrol Logging**: Record patrol activities and route tracking.
 - **User Collaboration**: Enable multiple users to collaborate within the app.
@@ -16,15 +16,15 @@ SMJP is an Android-based application developed for security personnel working in
 - **Offline Support**: Works seamlessly without an internet connection using Realm DB for local data storage.
 - **NFC & QR Code Scanner**: Scan codes for enhanced security and identification.
 
-#### Installation
+## Installation
 
-##### Prerequisites
+### Prerequisites
 - **Node.js** (v12 or later)
 - **npm** or **yarn** package manager
 - **React Native CLI** installed
 - Android device running Android 9.0 or higher.
 
-##### Steps
+### Steps
 1. Clone the repository:
     ```bash
     git clone https://github.com/ttarreuu/devsmjp.git
@@ -41,7 +41,7 @@ SMJP is an Android-based application developed for security personnel working in
     npx react-native run-android
     ```
 
-#### Usage
+## Usage
 
 Once the app is installed, it can be used by security personnel to:
 - Log attendance and patrol activities.
