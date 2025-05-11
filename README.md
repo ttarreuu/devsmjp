@@ -22,7 +22,7 @@ SMJP is an Android-based application developed for security personnel working in
 - **Node.js** (v12 or later)
 - **npm** or **yarn** package manager
 - **React Native CLI** installed
-- Android Studio for building and running the application
+- Android device running Android 9.0 or higher.
 
 ##### Steps
 1. Clone the repository:
@@ -36,12 +36,10 @@ SMJP is an Android-based application developed for security personnel working in
     npm install
     ```
 
-3. Install the required Android dependencies:
+3. Run the app on an Android emulator or device:
     ```bash
     npx react-native run-android
     ```
-
-4. Follow additional setup instructions for Mapbox and Realm from their official documentation.
 
 #### Usage
 
