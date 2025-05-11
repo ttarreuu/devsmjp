@@ -1,11 +1,6 @@
-### SMJP
+### SMJP (Security Mobile Job Portal)
 
 SMJP is an Android-based application developed for security personnel working in refinery areas to enhance work efficiency and effectiveness. The app is fully functional offline and includes features such as attendance tracking, patrol logging, user collaboration, and location tracking. It has been designed to support security operations in challenging environments, especially with limited or no internet connectivity.
-
-#### Project Images
-- ![Project Screenshot 1](link_to_image_1.png)
-- ![Project Screenshot 2](link_to_image_2.png)
-- ![Project Screenshot 3](link_to_image_3.png)
 
 #### Tech Stack
 - **React Native**: Cross-platform mobile app development framework.
@@ -17,16 +12,41 @@ SMJP is an Android-based application developed for security personnel working in
 - **Attendance Tracking**: Log attendance of security personnel.
 - **Patrol Logging**: Record patrol activities and route tracking.
 - **User Collaboration**: Enable multiple users to collaborate within the app.
-- **Location Tracking**: Realtime location tracking using Mapbox.
+- **Location Tracking**: Real-time location tracking using Mapbox.
 - **Offline Support**: Works seamlessly without an internet connection using Realm DB for local data storage.
 - **NFC & QR Code Scanner**: Scan codes for enhanced security and identification.
 
+#### Installation
+
+##### Prerequisites
+- **Node.js** (v12 or later)
+- **npm** or **yarn** package manager
+- **React Native CLI** installed
+- Android Studio for building and running the application
+
+##### Steps
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/ttarreuu/devsmjp.git
+    ```
+
+2. Install dependencies:
+    ```bash
+    cd devsmjp
+    npm install
+    ```
+
+3. Install the required Android dependencies:
+    ```bash
+    npx react-native run-android
+    ```
+
+4. Follow additional setup instructions for Mapbox and Realm from their official documentation.
+
 #### Usage
+
 Once the app is installed, it can be used by security personnel to:
 - Log attendance and patrol activities.
 - Collaborate with other users in the app.
 - View real-time location on the Mapbox-powered map.
 - Function offline in remote areas, saving data locally.
-
-#### License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
