@@ -6,7 +6,8 @@
 ![Realm](https://img.shields.io/badge/-Realm-39477F?style=for-the-badge&logo=realm&logoColor=white)
 ![Mapbox](https://img.shields.io/badge/-Mapbox-4264FB?style=for-the-badge&logo=mapbox&logoColor=white)
 
-
+*Screenshot*
+(update here!)
 
 SMJP is an Android-based application developed for security personnel working in refinery areas to enhance work efficiency and effectiveness. The app is fully functional offline and includes features such as attendance tracking, patrol logging, user collaboration, and location tracking. It has been designed to support security operations in challenging environments, especially with limited or no internet connectivity.
 
