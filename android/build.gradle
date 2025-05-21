@@ -3,7 +3,7 @@ buildscript {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 24
         compileSdkVersion = 35
-        targetSdkVersion = 34
+        targetSdkVersion = 28
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.24"
         RNMapboxMapsVersion = '11.0.0'
@@ -27,12 +27,12 @@ allprojects {
                 basic(BasicAuthentication)
             }
             credentials {
-                // Do not change the username below.
-                // This should always be `mapbox` (not your username).
                 username = 'mapbox'
                 password = 'sk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbTB1Z2NvZm4wMjNzMmlzMm5kNDJtc2x2In0.EOqRRNIs4nhl-mMPRyZOaA'
             }
         }
+        maven { url("${project(':react-native-background-geolocation').projectDir}/libs") }
+        maven { url("${project(':react-native-background-fetch').projectDir}/libs") }
     }
 }
 

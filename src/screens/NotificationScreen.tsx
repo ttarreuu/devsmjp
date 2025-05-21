@@ -1,149 +1,98 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
-import PersonIcon from '../assets/person-login.svg';
-import FingerPrintIcon from '../assets/finger-print.svg';
-import UserIcon from '../assets/user-icon.svg';
-import PwIcon from '../assets/pw-icon.svg';
-import HiddenPwIcon from '../assets/hidden-pw.svg';
-import UnhidePwIcon from '../assets/unhide-pw.svg';
+import React, {useEffect, useState} from 'react';
+import {Switch, Text, View} from 'react-native';
 
-export default function NotificationScreen() {
-  const navigation = useNavigation();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+import BackgroundGeolocation, {
+  Location,
+  Subscription,
+} from 'react-native-background-geolocation';
 
-  const handleLogin = () => {
-    console.log('Logging in with:', username, password);
-  };
+const HelloWorld = () => {
+  const [enabled, setEnabled] = useState(false);
+  const [location, setLocation] = useState('');
+
+  useEffect(() => {
+    const onLocation: Subscription = BackgroundGeolocation.onLocation(
+      location => {
+        console.log('[onLocation]', location);
+        setLocation(JSON.stringify(location, null, 2));
+      },
+      error => {
+        console.warn('[onLocation] ERROR:', error);
+      },
+    );
+
+    const onMotionChange: Subscription = BackgroundGeolocation.onMotionChange(
+      event => {
+        console.log('[onMotionChange]', event);
+      },
+    );
+
+    const onActivityChange: Subscription =
+      BackgroundGeolocation.onActivityChange(event => {
+        console.log('[onActivityChange]', event);
+      });
+
+    const onProviderChange: Subscription =
+      BackgroundGeolocation.onProviderChange(event => {
+        console.log('[onProviderChange]', event);
+      });
+
+    BackgroundGeolocation.ready({
+      desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 5, 
+      stopTimeout: 1,
+      debug: true,
+      locationUpdateInterval: 10000,
+      fastestLocationUpdateInterval: 10000,
+      logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      url: 'https://672fc91b66e42ceaf15eb4cc.mockapi.io/testLog',
+      batchSync: false,
+      autoSync: true,
+      headers: {
+        'X-FOO': 'bar',
+      },
+      params: {
+        auth_token: 'maybe_your_server_authenticates_via_token_YES?',
+      },
+    }).then(state => {
+      setEnabled(state.enabled);
+      console.log('- BackgroundGeolocation is ready: ', state.enabled);
+
+      BackgroundGeolocation.changePace(true);
+    });
+
+    return () => {
+      onLocation.remove();
+      onMotionChange.remove();
+      onActivityChange.remove();
+      onProviderChange.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (enabled) {
+      BackgroundGeolocation.start().then(() => {
+        console.log('[start] BackgroundGeolocation tracking started');
+      });
+    } else {
+      BackgroundGeolocation.stop();
+      setLocation('');
+    }
+  }, [enabled]);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <PersonIcon height={300} width={300} />
-        
-        <View style={styles.fingerprintContainer}>
-          <FingerPrintIcon width={45} height={45} />
-          <View style={styles.fingerprintTextContainer}>
-            <Text style={styles.fingerprintText}>Login</Text>
-            <Text style={styles.fingerprintSubText}>Input your registered username and password!</Text>
-          </View>
-        </View>
-        
-        <View style={styles.inputContainer}>
-          <UserIcon width={15} height={15} />
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-          />
-        </View>
-        
-        <View style={styles.inputContainer}>
-          <PwIcon width={20} height={20} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry={!isPasswordVisible}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-            {isPasswordVisible ? <UnhidePwIcon width={20} height={20} /> : <HiddenPwIcon width={20} height={20} />}
-          </TouchableOpacity>
-        </View>
-        
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginText}>Login</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.forgotPasswordContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPwScreen')}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <View style={{alignItems: 'center', marginTop: 10}}>
+        <Text>
+          Click to enable BackgroundGeolocation
+        </Text>
+        <Switch value={enabled} onValueChange={setEnabled} />
+        <Text style={{fontFamily: 'monospace', fontSize: 12}}>
+          {location}
+        </Text>
+    </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    marginTop: -50,
-  },
-  scrollContainer: {
-    alignItems: 'center',
-    // flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 35,
-  },
-  fingerprintContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 20,
-    marginTop: -50,
-  },
-  fingerprintTextContainer: {
-    marginLeft: 10,
-  },
-  fingerprintText: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Bold',
-    color: '#1185C8', 
-  },
-  fingerprintSubText: {
-    marginTop: -5,
-    fontSize: 11,
-    color: '#888',
-    fontFamily: 'Poppins-Medium',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    backgroundColor: '#E5E5E5',
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-    paddingVertical: 2,
-    paddingHorizontal: 10,
-    marginVertical: 10,
-    width: '100%',
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  loginButton: {
-    backgroundColor: '#1185C8',
-    padding: 7,
-    borderRadius: 8,
-    marginTop: 10,
-    alignItems: 'center',
-    width: '100%',
-  },
-  loginText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Poppins-Bold',
-  },
-  forgotPasswordContainer: {
-    width: '100%',
-    alignItems: 'flex-end',
-    marginTop: 10,
-  },
-  forgotPasswordText: {
-    color: '#1185C8',
-    fontSize: 12,
-    fontFamily: 'Poppins-Medium',
-    textDecorationLine: 'underline',
-  },
-});
-
+export default HelloWorld;

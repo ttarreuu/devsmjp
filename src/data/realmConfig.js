@@ -38,55 +38,6 @@ const LogTrackingTempSchema = {
   }
 };
 
-
-{/*
-
-  const LogTrackingTempSchema = {
-    name: 'LogTrackingTemp',
-    primaryKey: 'id',
-    properties: {
-      id: 'int',
-      attendanceID: 'string',
-      dateTime: 'date',
-      latitude: 'double',
-      longitude: 'double',
-      altitude: 'double',
-      speed: 'double',
-      accuracy: 'double',
-    },
-  };
-  
-  const LogPatrolSchema = {
-    name: 'LogPatrol',
-    primaryKey: 'id',
-    properties: {
-      id: 'int',
-      dateTime: 'date',
-      picture: 'string',
-      situationType: 'string',
-      description: 'string',
-      checkpointID: 'string',
-      method: 'string',
-    }
-  };
-  
-  const LogPatrolTempSchema = {
-    name: 'LogPatrolTemp',
-    primaryKey: 'id',
-    properties: {
-      id: 'int',
-      dateTime: 'date',
-      picture: 'string',
-      situationType: 'string',
-      description: 'string',
-      checkpointID: 'string',
-      method: 'string',
-    }
-  };
-
-*/}
-
-
 const EmergencyContactSchema = {
   name: 'EmergencyContact', 
   properties: {
