@@ -12,13 +12,18 @@ import LogIcon from '../../assets/log-icon.svg';
 import OffIcon from '../../assets/power-off.svg';
 import DropDownPicker from 'react-native-dropdown-picker';
 import CustomAlert from '../../components/CustomAlert';
+import BackgroundGeolocation, { Subscription } from "react-native-background-geolocation";
+import NetInfo from '@react-native-community/netinfo';
 
 Mapbox.setAccessToken("pk.eyJ1IjoiYnJhZGkyNSIsImEiOiJjbHloZXlncTUwMmptMmxvam16YzZpYWJ2In0.iAua4xmCQM94oKGXoW2LgA");
 
 const PatrolScreen = () => {
   const [logData, setLogData] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
-  const [currentLocation, setCurrentLocation] = useState(null);
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [nearestCheckpoint, setNearestCheckpoint] = useState(null);
   const [cameraQRVisible, setCameraQRVisible] = useState(false);
   const [isAttendance, setIsAttendance] = useState(false);
@@ -28,6 +33,7 @@ const PatrolScreen = () => {
   const [isHide, setIsHide] = useState(false);
   const [patrolMode, setPatrolMode] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
+  const [location, setLocation] = useState('');
 
   const device = useCameraDevice('back');
   const cameraRef = useRef<VisionCamera>(null);
@@ -59,11 +65,164 @@ const PatrolScreen = () => {
     setIsEnable(enable);
   }, [isAttendance, isCheckIn, currentLocation, nearestCheckpoint]);
 
+  useEffect(() => {
+    if (isStart) {
+      fetchLogTracking();
+
+      const onLocation: Subscription = BackgroundGeolocation.onLocation(
+        async location => {
+          console.log('[onLocation]', location);
+
+          const latitude = location.coords.latitude;
+          const longitude = location.coords.longitude;
+
+          setCurrentLocation({latitude, longitude});
+          checkProximity(latitude, longitude);
+
+          const log = {
+            dateTime: new Date(location.timestamp).toISOString(),
+            latitude: latitude,
+            longitude: longitude,
+            altitude: location.coords.altitude || 0,
+            speed: location.coords.speed || 0,
+            accuracy: location.coords.accuracy || 0,
+          };
+
+          try {
+            realmInstance.write(() => {
+              realmInstance.create('LogTracking', log);
+              realmInstance.create('LogTrackingTemp', log);
+            });
+            console.log(
+              '[Realm] Location saved to LogTracking & LogTrackingTemp',
+            );
+          } catch (err) {
+            console.error('[Realm] Failed to write location:', err);
+          }
+
+          const state = await NetInfo.fetch();
+          if (state.isConnected && state.isInternetReachable) {
+            try {
+              const logsToSync = realmInstance.objects('LogTracking');
+
+              if (logsToSync.length > 0) {
+                const logsArray = logsToSync.map(log => ({
+                  dateTime: log.dateTime,
+                  latitude: log.latitude,
+                  longitude: log.longitude,
+                  altitude: log.altitude,
+                  speed: log.speed,
+                  accuracy: log.accuracy,
+                }));
+
+                const response = await fetch(
+                  'https://672fc91b66e42ceaf15eb4cc.mockapi.io/test/1',
+                );
+                const json = await response.json();
+
+                const updatedLogPatrol = [
+                  ...(json.logPatrol || []),
+                  ...logsArray,
+                ];
+
+                await fetch(
+                  'https://672fc91b66e42ceaf15eb4cc.mockapi.io/test/1',
+                  {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      logPatrol: updatedLogPatrol,
+                    }),
+                  },
+                );
+
+                realmInstance.write(() => {
+                  realmInstance.delete(logsToSync);
+                });
+
+                console.log('[SYNC] Successfully pushed & deleted synced logs');
+              } else {
+                console.log('[SYNC] No logs to sync');
+              }
+            } catch (error) {
+              console.error('[SYNC ERROR] Failed to sync logs:', error);
+            }
+          } else {
+            console.log('[NetInfo] No internet connection. Skipping API push.');
+          }
+        },
+        error => {
+          console.warn('[onLocation] ERROR:', error);
+        },
+      );
+
+
+
+      const onMotionChange: Subscription = BackgroundGeolocation.onMotionChange(
+        event => {
+          console.log('[onMotionChange]', event);
+        },
+      );
+
+      const onActivityChange: Subscription =
+        BackgroundGeolocation.onActivityChange(event => {
+          console.log('[onActivityChange]', event);
+        });
+
+      const onProviderChange: Subscription =
+        BackgroundGeolocation.onProviderChange(event => {
+          console.log('[onProviderChange]', event);
+        });
+
+      BackgroundGeolocation.ready({
+        desiredAccuracy: BackgroundGeolocation.DESIRED_ACCURACY_HIGH,
+        distanceFilter: 10, 
+        locationUpdateInterval: 10000,
+        fastestLocationUpdateInterval: 10000, 
+        stopTimeout: 1,
+        debug: true,
+        logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        batchSync: false,
+        autoSync: false,
+        headers: {
+          'X-FOO': 'bar',
+        },
+        params: {
+          auth_token: 'maybe_your_server_authenticates_via_token_YES?',
+        },
+      }).then(state => {
+        console.log('- BackgroundGeolocation is ready: ', state.enabled);
+        BackgroundGeolocation.changePace(true);
+      });
+
+      return () => {
+        onLocation.remove();
+        onMotionChange.remove();
+        onActivityChange.remove();
+        onProviderChange.remove();
+      };
+    }
+  });
+
+  const fetchLogTracking = () => {
+    const logs = realmInstance.objects('LogTrackingTemp');
+    const parsedLogs = logs.map(log => ({
+      latitude: log.latitude,
+      longitude: log.longitude,
+      dateTime: log.dateTime,
+    }));
+    setLogData(parsedLogs);
+  };
+
   const fetchCheckpoints = async () => {
     const allCheckpoints = realmInstance.objects('Checkpoint');
     setCheckpoints(allCheckpoints);
   };
-
+ 
   const readStatus = async () => {
     const statusAttendance = await AsyncStorage.getItem('status');
     setIsAttendance(statusAttendance === 'true');
@@ -114,12 +273,13 @@ const PatrolScreen = () => {
   };
 
   const getGeoJSONLine = () => ({
-    type: "Feature",
+    type: 'Feature',
     geometry: {
-      type: "LineString",
-      coordinates: setLogData.map(log => [log.longitude, log.latitude]),
+      type: 'LineString',
+      coordinates: logData.map(log => [log.longitude, log.latitude]),
     },
   });
+
 
   const toggleTracking = async () => {
     if (!isAttendance) {
@@ -130,14 +290,20 @@ const PatrolScreen = () => {
     const newIsStart = !isStart;
     setIsStart(newIsStart);
     setIsHide(newIsStart);
+    BackgroundGeolocation.start().then(() => {
+      console.log('[start] BackgroundGeolocation tracking started');
+    });
 
     if (!newIsStart) {
       setPatrolMode('');
+      BackgroundGeolocation.stop();
+      setLocation('');
       await AsyncStorage.removeItem('patrolStarted');
     }
 
     await AsyncStorage.setItem('patrolStarted', JSON.stringify(newIsStart));
-};
+  };
+
 
 
   const [open, setOpen] = useState(false);
@@ -174,21 +340,17 @@ const PatrolScreen = () => {
     <View style={styles.page}>
       <CustomAlert
         visible={alertVisible}
-        title='Attendance Required'
-        message='You must mark attendance before starting patrol.'
+        title="Attendance Required"
+        message="You must mark attendance before starting patrol."
         onClose={() => setAlertVisible(false)}
       />
       {!isStart && !isHide && (
         <View style={styles.centerContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={toggleTracking}
-          >
+          <TouchableOpacity style={styles.button} onPress={toggleTracking}>
             <Text style={styles.buttonText2}>Start Patrol</Text>
           </TouchableOpacity>
         </View>
       )}
-
 
       {isHide && (
         <>
@@ -197,11 +359,18 @@ const PatrolScreen = () => {
               <OffIcon height={30} width={30} />
             </TouchableOpacity>
           </View>
-          <MapView style={styles.map} styleURL="mapbox://styles/mapbox/streets-v12" localizeLabels={true}>
+          <MapView
+            style={styles.map}
+            styleURL="mapbox://styles/mapbox/streets-v12"
+            localizeLabels={true}>
             {currentLocation && (
               <Camera
                 zoomLevel={17}
-                centerCoordinate={[currentLocation.longitude, currentLocation.latitude]} />
+                centerCoordinate={[
+                  currentLocation.longitude,
+                  currentLocation.latitude,
+                ]}
+              />
             )}
 
             {logData.length > 1 && (
@@ -213,18 +382,19 @@ const PatrolScreen = () => {
             {currentLocation && (
               <PointAnnotation
                 id="currentLocation"
-                coordinate={[currentLocation.longitude, currentLocation.latitude]}
-              >
+                coordinate={[
+                  currentLocation.longitude,
+                  currentLocation.latitude,
+                ]}>
                 <View style={styles.point} />
               </PointAnnotation>
             )}
 
-            {checkpoints.map((checkpoint) => (
+            {checkpoints.map(checkpoint => (
               <PointAnnotation
                 key={checkpoint.checkpointID}
                 id={checkpoint.checkpointID}
-                coordinate={[checkpoint.longitude, checkpoint.latitude]}
-              >
+                coordinate={[checkpoint.longitude, checkpoint.latitude]}>
                 <View style={styles.checkpoint} />
               </PointAnnotation>
             ))}
@@ -233,19 +403,19 @@ const PatrolScreen = () => {
               <ShapeSource
                 id={`route-${nearestCheckpoint.checkpointID}`}
                 shape={{
-                  type: "Feature",
+                  type: 'Feature',
                   geometry: {
-                    type: "LineString",
+                    type: 'LineString',
                     coordinates: [
                       [currentLocation.longitude, currentLocation.latitude],
                       [nearestCheckpoint.longitude, nearestCheckpoint.latitude],
                     ],
                   },
-                }}
-              >
+                }}>
                 <LineLayer
                   id={`lineLayer-${nearestCheckpoint.checkpointID}`}
-                  style={styles.routeLineLayer} />
+                  style={styles.routeLineLayer}
+                />
               </ShapeSource>
             )}
           </MapView>
@@ -255,22 +425,28 @@ const PatrolScreen = () => {
               style={styles.floatingButton}
               onPress={() => {
                 if (isEnable) {
-                  navigation.navigate('ConfirmScreen', { nearestCheckpoint });
+                  navigation.navigate('ConfirmScreen', {nearestCheckpoint});
                 }
               }}>
               <GPSIcon height={50} width={50} />
-              <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>GPS</Text>
+              <Text
+                style={[styles.buttonText, !isEnable && styles.disabledText]}>
+                GPS
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.floatingButton}
               onPress={() => {
                 if (isEnable) {
-                  navigation.navigate('NfcConfirmScreen', { nearestCheckpoint });
+                  navigation.navigate('NfcConfirmScreen', {nearestCheckpoint});
                 }
               }}>
               <NFCIcon height={50} width={50} />
-              <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>NFC</Text>
+              <Text
+                style={[styles.buttonText, !isEnable && styles.disabledText]}>
+                NFC
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -281,7 +457,10 @@ const PatrolScreen = () => {
                 }
               }}>
               <QRIcon height={50} width={50} />
-              <Text style={[styles.buttonText, !isEnable && styles.disabledText]}>QR Code</Text>
+              <Text
+                style={[styles.buttonText, !isEnable && styles.disabledText]}>
+                QR Code
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -290,7 +469,13 @@ const PatrolScreen = () => {
                 // navigate to log page
               }}>
               <LogIcon height={50} width={50} />
-              <Text style={[styles.buttonText, !isAttendance && styles.disabledText]}>Log</Text>
+              <Text
+                style={[
+                  styles.buttonText,
+                  !isAttendance && styles.disabledText,
+                ]}>
+                Log
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -303,14 +488,18 @@ const PatrolScreen = () => {
               setValue={setPatrolMode}
               setItems={setItems}
               placeholder="PATROL MODE"
-              style={{ borderColor: '#1185C8', backgroundColor: '#1185C8' }}
-              textStyle={{ fontFamily: 'Poppins-SemiBold', color: open ? '#1185C8' : '#ffff', textAlign: 'center' }}
-              dropDownContainerStyle={{ borderColor: '#ccc'}}
-              ArrowDownIconComponent={({ style }) => (
-                <Text style={[style, { color: 'white' }]}>▼</Text>
+              style={{borderColor: '#1185C8', backgroundColor: '#1185C8'}}
+              textStyle={{
+                fontFamily: 'Poppins-SemiBold',
+                color: open ? '#1185C8' : '#ffff',
+                textAlign: 'center',
+              }}
+              dropDownContainerStyle={{borderColor: '#ccc'}}
+              ArrowDownIconComponent={({style}) => (
+                <Text style={[style, {color: 'white'}]}>▼</Text>
               )}
-              ArrowUpIconComponent={({ style }) => (
-                <Text style={[style, { color: 'white' }]}>▲</Text>
+              ArrowUpIconComponent={({style}) => (
+                <Text style={[style, {color: 'white'}]}>▲</Text>
               )}
             />
           </View>

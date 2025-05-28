@@ -180,7 +180,7 @@ const ProfileScreen = () => {
           disabled={downloading}>
           <MapsIcon width={40} height={40} />
           <Text style={styles.buttonText}>
-            {downloading ? 'Downloading...' : 'Download Maps'}
+            Download
           </Text>
           {downloading && (
             <Text style={styles.progressTextRight}>{progress.toFixed(2)}%</Text>
@@ -276,11 +276,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   progressTextRight: {
-    position: 'absolute',
-    right: 10,
+    position: 'relative',
     fontSize: 16,
     fontFamily: 'Poppins-Bold',
     color: '#007AFF',
+    left: 100,
   },
   buttonContainer: {
     marginTop: 5,
