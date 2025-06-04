@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 200,
     alignSelf: 'center',
-    marginTop: 15,
+    marginVertical: 15
   },
   iconTextContainer: {
     justifyContent: 'center',

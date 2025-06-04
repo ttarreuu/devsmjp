@@ -66,8 +66,43 @@ export const fetchData = async () => {
 
     console.log('Data stored in Realm (Schedule):', scheduleData);
   } catch (error) {
-    // console.error('Error fetching Schedule:', error);
+
   }
+
+  try {
+    const company = realmInstance.objects('Company')[0];
+    const companyID = company?.companyID;
+
+    if (!companyID) {
+      console.error('No company ID found in Realm');
+      return;
+    }
+
+    const shiftURL = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/company/${encodeURIComponent(companyID)}/shift`;
+
+    const shiftResponse = await fetch(shiftURL);
+    const shiftData = await shiftResponse.json();
+
+    realmInstance.write(() => {
+      const oldShift = realmInstance.objects('Shift');
+      realmInstance.delete(oldShift);
+
+      shiftData.forEach((shift) => {
+        realmInstance.create('Shift', {
+          shiftID: shift.shiftID,
+          name: shift.name,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+        });
+      });
+    });
+
+
+    console.log('Shift Data stored in Realm:', shiftData);
+  } catch (error) {
+    console.error('Error fetching Shift:', error);
+  }
+
 
   try {
     const contactResponse = await fetch('https://672fc91b66e42ceaf15eb4cc.mockapi.io/Contact');

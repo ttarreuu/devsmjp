@@ -95,8 +95,18 @@ const CompanySchema = {
   },
 };
 
+const ShiftSchema = {
+  name: 'Shift',
+  properties: {
+    shiftID: 'string',
+    name: 'string',
+    startTime: 'string',
+    endTime: 'string',
+  },
+};
+
 const realmInstance = new Realm({
-  schema: [LogSchema, LogTrackingSchema, LogTrackingTempSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema],
+  schema: [LogSchema, LogTrackingSchema, LogTrackingTempSchema, CheckpointSchema, EmergencyContactSchema, ScheduleSchema, UserSchema, CompanySchema, ShiftSchema],
   path: 'log_temp.realm', 
 });
 
