@@ -7,6 +7,11 @@ import RNFS from "react-native-fs";
 import NetInfo from "@react-native-community/netinfo";
 import realmInstance from '../../data/realmConfig';
 import { handleClockIn, handleClockOut, syncRealmToApi } from '../../data/handle_log';
+import Clockin from '../../assets/clock-in.svg';
+import Clockout from '../../assets/clock-out.svg';
+import ClockInSymbol from '../../assets/clock-in-sy.svg';
+import ClockOutSymbol from '../../assets/clock-out-sy.svg';
+import ClockHistory from '../../assets/clock-history.svg';
 
 const AttendanceScreen = () => {
   
@@ -18,18 +23,82 @@ const AttendanceScreen = () => {
 
   const [startPic, setStartPic] = useState('');
   const [endPic, setEndPic] = useState('');
-  
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+
+  const [clockInTime, setClockInTime] = useState('');
+  const [clockOutTime, setClockOutTime] = useState('');
+
+  const readClockTimes = async () => {
+    const inTime = await AsyncStorage.getItem('clockInTime');
+    const outTime = await AsyncStorage.getItem('clockOutTime');
+    if (inTime)
+      setClockInTime(
+        new Date(inTime).toLocaleTimeString('en-GB', {hour12: false}),
+      );
+    if (outTime)
+      setClockOutTime(
+        new Date(outTime).toLocaleTimeString('en-GB', {hour12: false}),
+      );
+  };
+
+  const loadClockTimes = async () => {
+    try {
+      const inTime = await AsyncStorage.getItem('clockInTime');
+      const outTime = await AsyncStorage.getItem('clockOutTime');
+
+      if (inTime)
+        setClockInTime(
+          new Date(inTime).toLocaleTimeString('en-GB', {hour12: false}),
+        );
+      if (outTime)
+        setClockOutTime(
+          new Date(outTime).toLocaleTimeString('en-GB', {hour12: false}),
+        );
+    } catch (error) {
+      console.error('Error loading clock times:', error);
+    }
+  };
+
   useEffect(() => {
     readStatus();
     checkPermission();
+    readClockTimes();
 
-    const interval = setInterval(() => {
+    const syncInterval = setInterval(() => {
       syncRealmToApi();
-    }, 10000); // every 10 seconds
+    }, 10000);
 
-    return () => clearInterval(interval);
+    const timeInterval = setInterval(() => {
+      const now = new Date();
+      const formattedTime = now.toLocaleTimeString('en-GB', {hour12: false});
+      const formattedDate = now.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      setCurrentTime(formattedTime);
+      setCurrentDate(formattedDate);
+    }, 1000);
+
+    return () => {
+      clearInterval(syncInterval);
+      clearInterval(timeInterval);
+    };
+
 
   }, []);
+
+  useEffect(() => {
+    loadClockTimes();
+    const interval = setInterval(() => {
+      loadClockTimes();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   const readStatus = async () => {
     const status = await AsyncStorage.getItem('status');
@@ -100,10 +169,21 @@ const AttendanceScreen = () => {
         await handleClockOut(now, endPic);
         setIsAttendance(false);
         await AsyncStorage.setItem('status', 'false');
+        await AsyncStorage.setItem('clockOutTime', now);
+
+        // Clear clock-in/out after 1 minute
+        setTimeout(async () => {
+          await AsyncStorage.removeItem('clockInTime');
+          await AsyncStorage.removeItem('clockOutTime');
+          setClockInTime('');
+          setClockOutTime('');
+          console.log('ClockIn & ClockOut data cleared from AsyncStorage');
+        }, 60000); // 60000 ms = 1 minute
       } else {
         await handleClockIn(now, startPic);
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
+        await AsyncStorage.setItem('clockInTime', now);
       }
 
       setIsHide(false);
@@ -122,19 +202,75 @@ const AttendanceScreen = () => {
   }
 
   return (
-    <View style={{flex:1}}>
+    <View style={{flex: 1}}>
       {!isHide && !cameraVisible && !previewVisible && (
-        <TouchableOpacity 
-          style={[styles.button]} 
-          onPress={toggleTracking}
-          >
-          <Text style={styles.buttonText}>
-            {isAttendance ? 'Stop Background Task' : 'Start Background Task'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.centerContainer}>
+          <Text style={styles.timeText}>{currentTime}</Text>
+          <Text style={styles.dateText}>{currentDate}</Text>
+          <TouchableOpacity style={styles.button} onPress={toggleTracking}>
+            {isAttendance ? (
+              <View style={styles.iconTextContainer}>
+                <Clockout width={75} height={75} />
+                <Text style={styles.buttonText2}>Clock-out</Text>
+              </View>
+            ) : (
+              <View style={styles.iconTextContainer}>
+                <Clockin width={75} height={75} />
+                <Text style={styles.buttonText2}>Clock-in</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              marginTop: 30,
+              width: '80%',
+            }}>
+            <View style={{alignItems: 'center'}}>
+              <ClockInSymbol width={40} height={40} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  marginTop: 5,
+                  fontFamily: 'Poppins-SemiBold',
+                }}>
+                Clock In
+              </Text>
+              <Text style={{fontSize: 14, fontFamily: 'Poppins-Regular'}}>
+                {clockInTime || '-'}
+              </Text>
+            </View>
+            <View style={{alignItems: 'center'}}>
+              <ClockOutSymbol width={40} height={40} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  marginTop: 5,
+                  fontFamily: 'Poppins-SemiBold',
+                }}>
+                Clock Out
+              </Text>
+              <Text style={{fontSize: 14, fontFamily: 'Poppins-Regular'}}>
+                {clockOutTime || '-'}
+              </Text>
+            </View>
+            <View style={{alignItems: 'center'}}>
+              <ClockHistory width={40} height={40} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  marginTop: 5,
+                  fontFamily: 'Poppins-SemiBold',
+                }}>
+                History
+              </Text>
+            </View>
+          </View>
+        </View>
       )}
       {isHide && cameraVisible && !previewVisible && device ? (
-        <View style={{ flex: 1 }}>
+        <View style={{flex: 1}}>
           <Camera
             ref={camera}
             style={StyleSheet.absoluteFill}
@@ -152,13 +288,12 @@ const AttendanceScreen = () => {
           {previewVisible && imageData !== '' && (
             <>
               <Image
-                source={{ uri: 'file://' + imageData }}
+                source={{uri: 'file://' + imageData}}
                 style={styles.imagePreview}
               />
               <TouchableOpacity
                 style={styles.confirmButton}
-                onPress={handleConfirm}
-              >
+                onPress={handleConfirm}>
                 <Text style={styles.buttonText}>Confirm</Text>
               </TouchableOpacity>
             </>
@@ -170,23 +305,47 @@ const AttendanceScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  body: {
-    backgroundColor: 'transparent',
+  page: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+    backgroundColor: '#ffff',
   },
-  button: {
-    width: 150,  
-    height: 150, 
-    backgroundColor: 'green',
+  timeText: {
+    fontSize: 50,
+    color: 'black',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  centerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 75, 
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -75 }, { translateY: -75 }], 
+    backgroundColor: 'transparent',
+  },
+  button: {
+    width: 200,
+    height: 200,
+    borderColor: '#1185C8',
+    backgroundColor: '#1185C8',
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 200,
+    alignSelf: 'center',
+    marginTop: 15,
+  },
+  iconTextContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText2: {
+    marginTop: 10,
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
   },
   buttonText: {
     color: 'white',
@@ -204,7 +363,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -20,
     alignSelf: 'center',
-    marginTop: 20
+    marginTop: 20,
   },
   contentPreview: {
     justifyContent: 'flex-start',
@@ -228,6 +387,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 50,
     alignSelf: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#555',
+    fontFamily: 'Poppins-SemiBold',
+    marginTop: -20,
   },
 });
 
