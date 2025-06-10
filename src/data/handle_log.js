@@ -4,13 +4,11 @@ import NetInfo from '@react-native-community/netinfo';
 import uuid from 'react-native-uuid';
 import realmInstance from './realmConfig';
 
-// Get User ID from Realm
 const getUserIDFromRealm = () => {
   const user = realmInstance.objects('User')[0];
   return user?.userID || null;
 };
 
-// Helper: POST attendance start data to API
 const postAttendanceToAPI = async (userID, attendanceID, startDateTime, startPicture) => {
   const url = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance`;
 
@@ -29,10 +27,9 @@ const postAttendanceToAPI = async (userID, attendanceID, startDateTime, startPic
   if (!res.ok) return null;
 
   const responseData = await res.json();
-  return responseData.Id; // API's attendanceID
+  return responseData.Id; 
 };
 
-// Helper: PUT attendance end data to API
 const putAttendanceUpdateToAPI = async (userID, apiId, endDateTime, endPicture) => {
   const url = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance/${apiId}`;
 
@@ -48,7 +45,6 @@ const putAttendanceUpdateToAPI = async (userID, apiId, endDateTime, endPicture) 
   return res.ok;
 };
 
-// Helper: Fallback POST with full data if PUT fails or record not found
 const postFullAttendanceToAPI = async (userID, log) => {
   const postUrl = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance`;
 
@@ -57,6 +53,7 @@ const postFullAttendanceToAPI = async (userID, log) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       attendanceID: log.attendanceID,
+      shiftID: log.shiftID,
       startDateTime: log.startDateTime,
       startPicture: log.startPicture,
       endDateTime: log.endDateTime,
@@ -67,8 +64,7 @@ const postFullAttendanceToAPI = async (userID, log) => {
   return res.ok;
 };
 
-// Clock-In Function
-export const handleClockIn = async (startDateTime, startPicture) => {
+export const handleClockIn = async (startDateTime, startPicture, shiftID) => {
   try {
     const userID = getUserIDFromRealm();
     if (!userID) {
@@ -83,6 +79,7 @@ export const handleClockIn = async (startDateTime, startPicture) => {
     Realm.write(() => {
       Realm.create('Log', {
         attendanceID,
+        shiftID,
         startDateTime,
         startPicture,
         endDateTime: '',
@@ -111,7 +108,6 @@ export const handleClockIn = async (startDateTime, startPicture) => {
   }
 };
 
-// Clock-Out Function
 export const handleClockOut = async (endDateTime, endPicture) => {
   try {
     const userID = getUserIDFromRealm();
@@ -196,7 +192,6 @@ export const syncRealmToApi = async () => {
   }
 
   try {
-    // Retry clock-in sync
     if (clockInSynced === 'false') {
       const apiAttendanceID = await postAttendanceToAPI(userID, attendanceID, log.startDateTime, log.startPicture);
       if (apiAttendanceID) {
@@ -206,7 +201,6 @@ export const syncRealmToApi = async () => {
       }
     }
 
-    // Retry clock-out sync
     if (clockOutSynced === 'false' && log.endDateTime && log.endPicture) {
       const apiId = await AsyncStorage.getItem('apiId');
       let success = false;
@@ -222,7 +216,6 @@ export const syncRealmToApi = async () => {
       if (success) {
         await AsyncStorage.setItem('clockOutSynced', 'true');
 
-        // Clean up
         realmInstance.write(() => {
           realmInstance.delete(log);
         });

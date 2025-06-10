@@ -12,6 +12,9 @@ import Clockout from '../../assets/clock-out.svg';
 import ClockInSymbol from '../../assets/clock-in-sy.svg';
 import ClockOutSymbol from '../../assets/clock-out-sy.svg';
 import ClockHistory from '../../assets/clock-history.svg';
+import DropDownPicker from 'react-native-dropdown-picker';
+import Geolocation from 'react-native-geolocation-service';
+
 
 const AttendanceScreen = () => {
   
@@ -28,6 +31,65 @@ const AttendanceScreen = () => {
 
   const [clockInTime, setClockInTime] = useState('');
   const [clockOutTime, setClockOutTime] = useState('');
+
+  const [shifts, setShifts] = useState([]);
+  const [selectedShift, setSelectedShift] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const [shiftSelected, setShiftSelected] = useState(null);
+  type ShiftItem = {
+    label: string;
+    value: string | number;
+  };
+
+
+  const [items, setItems] = useState<ShiftItem[]>([]);
+  const [isWithinRadius, setIsWithinRadius] = useState(false);
+  
+  const checkProximity = () => {
+    const realmLocation = realmInstance.objects('Company')[0];
+    if (!realmLocation) return;
+
+    const centerLat = realmLocation.Lat;
+    const centerLon = realmLocation.Long;
+    const radius = realmLocation.radius; // radius in meters
+
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        const distance = getDistanceFromLatLonInMeters(
+          latitude,
+          longitude,
+          centerLat,
+          centerLon,
+        );
+
+        setIsWithinRadius(distance <= radius);
+      },
+      error => {
+        console.error('Location error:', error);
+        setIsWithinRadius(false);
+      },
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+    );
+  };
+
+  useEffect(() => {
+    const shiftData = realmInstance.objects('Shift');
+    const shiftArray = [...shiftData];
+    setShifts(shiftArray);
+    setItems(
+      shiftArray.map(shift => ({
+        label: `${shift.name} (${shift.startTime.slice(
+          0,
+          5,
+        )} - ${shift.endTime.slice(0, 5)})`,
+        value: shift.shiftID as string | number,
+      })),
+    );
+  }, []);
+
+
 
   const readClockTimes = async () => {
     const inTime = await AsyncStorage.getItem('clockInTime');
@@ -92,9 +154,11 @@ const AttendanceScreen = () => {
   }, []);
 
   useEffect(() => {
+    checkProximity();
     loadClockTimes();
     const interval = setInterval(() => {
       loadClockTimes();
+      checkProximity();
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -119,6 +183,22 @@ const AttendanceScreen = () => {
     const newCameraPermission = Camera.requestCameraPermission;
     console.log(newCameraPermission);
   };
+
+  const getDistanceFromLatLonInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371000; // Radius of the Earth in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // distance in meters
+  };
+
   
   const toggleTracking = () => {
     setIsHide(true);
@@ -180,7 +260,7 @@ const AttendanceScreen = () => {
           console.log('ClockIn & ClockOut data cleared from AsyncStorage');
         }, 60000); // 60000 ms = 1 minute
       } else {
-        await handleClockIn(now, startPic);
+        await handleClockIn(now, startPic, shiftSelected);
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
         await AsyncStorage.setItem('clockInTime', now);
@@ -202,24 +282,60 @@ const AttendanceScreen = () => {
   }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{flex: 1, marginTop: 25}}>
       {!isHide && !cameraVisible && !previewVisible && (
         <View style={styles.centerContainer}>
           <Text style={styles.timeText}>{currentTime}</Text>
           <Text style={styles.dateText}>{currentDate}</Text>
-          <TouchableOpacity style={styles.button} onPress={toggleTracking}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {backgroundColor: isWithinRadius ? '#1185C8' : '#ccc'},
+            ]}
+            onPress={toggleTracking}
+            disabled={!isWithinRadius}>
             {isAttendance ? (
               <View style={styles.iconTextContainer}>
-                <Clockout width={75} height={75} />
+                <Clockout width={60} height={60} />
                 <Text style={styles.buttonText2}>Clock-out</Text>
               </View>
             ) : (
               <View style={styles.iconTextContainer}>
-                <Clockin width={75} height={75} />
+                <Clockin width={60} height={60} />
                 <Text style={styles.buttonText2}>Clock-in</Text>
               </View>
             )}
           </TouchableOpacity>
+          <View style={{width: '80%', marginTop: 5}}>
+            <View style={{borderRadius: 5}}>
+              <View style={styles.dropdownContainer}>
+                <DropDownPicker
+                  open={open}
+                  value={shiftSelected}
+                  items={items}
+                  setOpen={setOpen}
+                  setValue={setShiftSelected}
+                  setItems={setItems}
+                  placeholder="SELECT SHIFT"
+                  style={{borderColor: '#1185C8', backgroundColor: '#1185C8'}}
+                  textStyle={{
+                    fontFamily: 'Poppins-SemiBold',
+                    color: open ? '#1185C8' : '#ffff',
+                    textAlign: open ? 'left' : 'center',
+                  }}
+                  dropDownContainerStyle={{
+                    borderColor: '#ccc',
+                  }}
+                  ArrowDownIconComponent={({style}) => (
+                    <Text style={[style, {color: 'white'}]}>▼</Text>
+                  )}
+                  ArrowUpIconComponent={({style}) => (
+                    <Text style={[style, {color: 'white'}]}>▲</Text>
+                  )}
+                />
+              </View>
+            </View>
+          </View>
           <View
             style={{
               flexDirection: 'row',
@@ -309,6 +425,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffff',
   },
+  dropdownContainer: {
+    zIndex: 1000,
+  },
   timeText: {
     fontSize: 50,
     color: 'black',
@@ -325,16 +444,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   button: {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
     borderColor: '#1185C8',
     backgroundColor: '#1185C8',
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 200,
+    borderRadius: 150,
     alignSelf: 'center',
-    marginVertical: 15
+    marginVertical: 15,
   },
   iconTextContainer: {
     justifyContent: 'center',
