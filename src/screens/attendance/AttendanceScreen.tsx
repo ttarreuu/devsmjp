@@ -32,16 +32,12 @@ const AttendanceScreen = () => {
   const [clockInTime, setClockInTime] = useState('');
   const [clockOutTime, setClockOutTime] = useState('');
 
-  const [shifts, setShifts] = useState([]);
-  const [selectedShift, setSelectedShift] = useState('');
   const [open, setOpen] = useState(false);
-
   const [shiftSelected, setShiftSelected] = useState(null);
   type ShiftItem = {
     label: string;
     value: string | number;
   };
-
 
   const [items, setItems] = useState<ShiftItem[]>([]);
   const [isWithinRadius, setIsWithinRadius] = useState(false);
@@ -52,7 +48,7 @@ const AttendanceScreen = () => {
 
     const centerLat = realmLocation.Lat;
     const centerLon = realmLocation.Long;
-    const radius = realmLocation.radius; // radius in meters
+    const radius = realmLocation.radius;
 
     Geolocation.getCurrentPosition(
       position => {
@@ -77,7 +73,6 @@ const AttendanceScreen = () => {
   useEffect(() => {
     const shiftData = realmInstance.objects('Shift');
     const shiftArray = [...shiftData];
-    setShifts(shiftArray);
     setItems(
       shiftArray.map(shift => ({
         label: `${shift.name} (${shift.startTime.slice(
@@ -88,8 +83,6 @@ const AttendanceScreen = () => {
       })),
     );
   }, []);
-
-
 
   const readClockTimes = async () => {
     const inTime = await AsyncStorage.getItem('clockInTime');
@@ -172,11 +165,12 @@ const AttendanceScreen = () => {
       setIsAttendance(false);
     }
   };
-
-  const checkInternetConnection = async () => {
-    return await NetInfo.fetch().then(
-      (state: {isConnected: any}) => state.isConnected,
-    );
+  
+  const getShiftIDFromName = (shiftName: string) => {
+    const shift = realmInstance
+      .objects('Shift')
+      .filtered('name == $0', shiftName)[0];
+    return shift?.shiftID || null;
   };
   
   const checkPermission = () => {
@@ -196,7 +190,7 @@ const AttendanceScreen = () => {
         Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // distance in meters
+    return R * c;
   };
 
   
@@ -250,16 +244,18 @@ const AttendanceScreen = () => {
         setIsAttendance(false);
         await AsyncStorage.setItem('status', 'false');
         await AsyncStorage.setItem('clockOutTime', now);
+        setShiftSelected(null);
 
-        // Clear clock-in/out after 1 minute
         setTimeout(async () => {
           await AsyncStorage.removeItem('clockInTime');
           await AsyncStorage.removeItem('clockOutTime');
           setClockInTime('');
           setClockOutTime('');
           console.log('ClockIn & ClockOut data cleared from AsyncStorage');
-        }, 60000); // 60000 ms = 1 minute
+        }, 60000);
       } else {
+        console.log('Selected Shift ID:', shiftSelected);
+
         await handleClockIn(now, startPic);
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
@@ -282,7 +278,7 @@ const AttendanceScreen = () => {
   }
 
   return (
-    <View style={{flex: 1, marginTop: 25}}>
+    <View style={{flex: 1}}>
       {!isHide && !cameraVisible && !previewVisible && (
         <View style={styles.centerContainer}>
           <Text style={styles.timeText}>{currentTime}</Text>
@@ -290,7 +286,10 @@ const AttendanceScreen = () => {
           <TouchableOpacity
             style={[
               styles.button,
-              {backgroundColor: isWithinRadius ? '#1185C8' : '#ccc'},
+              {
+                backgroundColor: isWithinRadius ? '#1185C8' : '#ccc',
+                borderColor: isWithinRadius ? '#1185C8' : '#ccc',
+              },
             ]}
             onPress={toggleTracking}
             disabled={!isWithinRadius}>
@@ -317,10 +316,13 @@ const AttendanceScreen = () => {
                   setValue={setShiftSelected}
                   setItems={setItems}
                   placeholder="SELECT SHIFT"
-                  style={{borderColor: '#1185C8', backgroundColor: '#1185C8'}}
+                  style={{
+                    borderColor: '#1185C8',
+                    backgroundColor: '#1185C8',
+                  }}
                   textStyle={{
                     fontFamily: 'Poppins-SemiBold',
-                    color: open ? '#1185C8' : '#ffff',
+                    color: open ? '#1185C8' : '#fff',
                     textAlign: open ? 'left' : 'center',
                   }}
                   dropDownContainerStyle={{
@@ -332,6 +334,7 @@ const AttendanceScreen = () => {
                   ArrowUpIconComponent={({style}) => (
                     <Text style={[style, {color: 'white'}]}>▲</Text>
                   )}
+                  disabled={isAttendance}
                 />
               </View>
             </View>
