@@ -14,6 +14,7 @@ import ClockOutSymbol from '../../assets/clock-out-sy.svg';
 import ClockHistory from '../../assets/clock-history.svg';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Geolocation from 'react-native-geolocation-service';
+import CustomAlert from '../../components/CustomAlert';
 
 
 const AttendanceScreen = () => {
@@ -31,6 +32,8 @@ const AttendanceScreen = () => {
 
   const [clockInTime, setClockInTime] = useState('');
   const [clockOutTime, setClockOutTime] = useState('');
+  
+  const [alertVisible, setAlertVisible] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [shiftSelected, setShiftSelected] = useState(null);
@@ -202,8 +205,12 @@ const AttendanceScreen = () => {
 
   
   const toggleTracking = () => {
-    setIsHide(true);
-    setCameraVisible(true);
+    if (!shiftSelected) {
+      setAlertVisible(true);
+    } else {
+      setIsHide(true);
+      setCameraVisible(true);
+    }
   };
   
   const takePicture = async () => {
@@ -293,6 +300,12 @@ const AttendanceScreen = () => {
 
   return (
     <View style={{flex: 1}}>
+      <CustomAlert
+        visible={alertVisible}
+        title="No Shift Selected"
+        message="No shift selected. Please select a shift before continuing."
+        onClose={() => setAlertVisible(false)}
+      />
       {!isHide && !cameraVisible && !previewVisible && (
         <View style={styles.centerContainer}>
           <Text style={styles.timeText}>{currentTime}</Text>
