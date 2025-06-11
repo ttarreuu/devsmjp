@@ -303,7 +303,7 @@ const AttendanceScreen = () => {
       <CustomAlert
         visible={alertVisible}
         title="No Shift Selected"
-        message="No shift selected. Please select a shift before continuing."
+        message="Please select a shift before continuing."
         onClose={() => setAlertVisible(false)}
       />
       {!isHide && !cameraVisible && !previewVisible && (
@@ -462,6 +462,7 @@ const styles = StyleSheet.create({
     fontSize: 50,
     color: 'black',
     fontFamily: 'Poppins-SemiBold',
+    marginTop: 25,
   },
   centerContainer: {
     position: 'absolute',
