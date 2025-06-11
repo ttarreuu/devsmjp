@@ -41,6 +41,8 @@ const AttendanceScreen = () => {
 
   const [items, setItems] = useState<ShiftItem[]>([]);
   const [isWithinRadius, setIsWithinRadius] = useState(false);
+  const [userLat, setUserLat] = useState('');
+  const [userLong, setUserLong] = useState('');
   
   const checkProximity = () => {
     const realmLocation = realmInstance.objects('Company')[0];
@@ -53,6 +55,10 @@ const AttendanceScreen = () => {
     Geolocation.getCurrentPosition(
       position => {
         const {latitude, longitude} = position.coords;
+
+        setUserLat(latitude.toString());
+        setUserLong(longitude.toString());
+
         const distance = getDistanceFromLatLonInMeters(
           latitude,
           longitude,
@@ -69,6 +75,7 @@ const AttendanceScreen = () => {
       {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
     );
   };
+
 
   useEffect(() => {
     const shiftData = realmInstance.objects('Shift');
@@ -179,7 +186,7 @@ const AttendanceScreen = () => {
   };
 
   const getDistanceFromLatLonInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371000; // Radius of the Earth in meters
+    const R = 6371000; 
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -239,8 +246,15 @@ const AttendanceScreen = () => {
   const handleConfirm = async () => {
     try {
       const now = new Date().toISOString();
+      Geolocation.getCurrentPosition((position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        console.log(latitude);
+        console.log(longitude);
+      })
       if (isAttendance) {
-        await handleClockOut(now, endPic);
+        await handleClockOut(now, endPic, userLat, userLong);
         setIsAttendance(false);
         await AsyncStorage.setItem('status', 'false');
         await AsyncStorage.setItem('clockOutTime', now);
@@ -256,7 +270,7 @@ const AttendanceScreen = () => {
       } else {
         console.log('Selected Shift ID:', shiftSelected);
 
-        await handleClockIn(now, startPic);
+        await handleClockIn(shiftSelected, now, startPic, userLat, userLong);
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
         await AsyncStorage.setItem('clockInTime', now);

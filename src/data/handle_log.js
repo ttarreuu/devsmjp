@@ -9,7 +9,7 @@ const getUserIDFromRealm = () => {
   return user?.userID || null;
 };
 
-const postAttendanceToAPI = async (userID, attendanceID, startDateTime, startPicture) => {
+const postAttendanceToAPI = async (userID, attendanceID, shiftID, startDateTime, startPicture, startLat, startLong) => {
   const url = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance`;
 
   const res = await fetch(url, {
@@ -19,8 +19,11 @@ const postAttendanceToAPI = async (userID, attendanceID, startDateTime, startPic
     },
     body: JSON.stringify({
       attendanceID,
+      shiftID,
       startDateTime,
       startPicture,
+      startLat,
+      startLong,
     }),
   });
 
@@ -30,7 +33,7 @@ const postAttendanceToAPI = async (userID, attendanceID, startDateTime, startPic
   return responseData.Id; 
 };
 
-const putAttendanceUpdateToAPI = async (userID, apiId, endDateTime, endPicture) => {
+const putAttendanceUpdateToAPI = async (userID, apiId, endDateTime, endPicture, endLat, endLong) => {
   const url = `https://672fc91b66e42ceaf15eb4cc.mockapi.io/user/${userID}/Attendance/${apiId}`;
 
   const response = await fetch(url);
@@ -39,7 +42,7 @@ const putAttendanceUpdateToAPI = async (userID, apiId, endDateTime, endPicture) 
   const res = await fetch(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endDateTime, endPicture }),
+    body: JSON.stringify({ endDateTime, endPicture, endLat, endLong }),
   });
 
   return res.ok;
@@ -53,17 +56,24 @@ const postFullAttendanceToAPI = async (userID, log) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       attendanceID: log.attendanceID,
+      shiftID: log.shiftID,
+      
       startDateTime: log.startDateTime,
       startPicture: log.startPicture,
+      startLat: log.startLat,
+      startLong: log.startLong,
+
       endDateTime: log.endDateTime,
       endPicture: log.endPicture,
+      endLat: log.endLat,
+      endLong: log.endLong,
     }),
   });
 
   return res.ok;
 };
 
-export const handleClockIn = async (startDateTime, startPicture ) => {
+export const handleClockIn = async (shiftID, startDateTime, startPicture, startLat, startLong) => {
   try {
     const userID = getUserIDFromRealm();
     if (!userID) {
@@ -78,17 +88,25 @@ export const handleClockIn = async (startDateTime, startPicture ) => {
     Realm.write(() => {
       Realm.create('Log', {
         attendanceID,
+        shiftID,
+
         startDateTime,
         startPicture,
+        startLat,
+        startLong,
+
         endDateTime: '',
         endPicture: '',
+        endLat: '',
+        endLong: '',
+
         LogTracking: [],
       });
     });
 
     const netState = await NetInfo.fetch();
     if (netState.isConnected) {
-      const apiAttendanceID = await postAttendanceToAPI(userID, attendanceID, startDateTime, startPicture);
+      const apiAttendanceID = await postAttendanceToAPI(userID, attendanceID, shiftID, startDateTime, startPicture, startLat, startLong);
       if (apiAttendanceID) {
         await AsyncStorage.setItem('apiId', apiAttendanceID);
         await AsyncStorage.setItem('clockInSynced', 'true');
@@ -106,7 +124,7 @@ export const handleClockIn = async (startDateTime, startPicture ) => {
   }
 };
 
-export const handleClockOut = async (endDateTime, endPicture) => {
+export const handleClockOut = async (endDateTime, endPicture, endLat, endLong) => {
   try {
     const userID = getUserIDFromRealm();
     if (!userID) {
@@ -129,13 +147,15 @@ export const handleClockOut = async (endDateTime, endPicture) => {
     Realm.write(() => {
       log.endDateTime = endDateTime;
       log.endPicture = endPicture;
+      log.endlat = endLat;
+      log.endLong = endLong;
     });
 
     const apiId = await AsyncStorage.getItem('apiId');
     const netState = await NetInfo.fetch();
 
     if (netState.isConnected) {
-      let success = await putAttendanceUpdateToAPI(userID, apiId, endDateTime, endPicture);
+      let success = await putAttendanceUpdateToAPI(userID, apiId, endDateTime, endPicture, endLat, endLong);
 
       if (!success) {
         success = await postFullAttendanceToAPI(userID, log);
@@ -191,7 +211,7 @@ export const syncRealmToApi = async () => {
 
   try {
     if (clockInSynced === 'false') {
-      const apiAttendanceID = await postAttendanceToAPI(userID, attendanceID, log.startDateTime, log.startPicture);
+      const apiAttendanceID = await postAttendanceToAPI(userID, attendanceID, log.shiftID, log.startDateTime, log.startPicture, log.startLat, log.startLong);
       if (apiAttendanceID) {
         await AsyncStorage.setItem('apiId', apiAttendanceID);
         await AsyncStorage.setItem('clockInSynced', 'true');
@@ -199,12 +219,12 @@ export const syncRealmToApi = async () => {
       }
     }
 
-    if (clockOutSynced === 'false' && log.endDateTime && log.endPicture) {
+    if (clockOutSynced === 'false' && log.endDateTime && log.endPicture && log.endLat && log.endLong) {
       const apiId = await AsyncStorage.getItem('apiId');
       let success = false;
 
       if (apiId) {
-        success = await putAttendanceUpdateToAPI(userID, apiId, log.endDateTime, log.endPicture);
+        success = await putAttendanceUpdateToAPI(userID, apiId, log.endDateTime, log.endPicture, log.endLat, log.endLong);
       }
 
       if (!success) {

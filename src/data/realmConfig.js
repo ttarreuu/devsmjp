@@ -5,10 +5,18 @@ const LogSchema = {
   primaryKey: 'attendanceID',
   properties: {
     attendanceID: 'string',
+    shiftID: 'string',
+
     startDateTime: 'string',
     startPicture: 'string',
+    startLat: 'string',
+    startLong: 'string',
+    
     endDateTime: 'string',
     endPicture: 'string',
+    endLat: 'string',
+    endLong: 'string',
+    
     LogTracking: 'LogTracking[]',
     LogTrackingTemp: 'LogTrackingTemp[]'
   }
