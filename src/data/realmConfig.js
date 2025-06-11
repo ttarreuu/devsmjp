@@ -5,7 +5,6 @@ const LogSchema = {
   primaryKey: 'attendanceID',
   properties: {
     attendanceID: 'string',
-    shiftID: 'string',
     startDateTime: 'string',
     startPicture: 'string',
     endDateTime: 'string',

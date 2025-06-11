@@ -53,7 +53,6 @@ const postFullAttendanceToAPI = async (userID, log) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       attendanceID: log.attendanceID,
-      shiftID: log.shiftID,
       startDateTime: log.startDateTime,
       startPicture: log.startPicture,
       endDateTime: log.endDateTime,
@@ -64,7 +63,7 @@ const postFullAttendanceToAPI = async (userID, log) => {
   return res.ok;
 };
 
-export const handleClockIn = async (startDateTime, startPicture, shiftID) => {
+export const handleClockIn = async (startDateTime, startPicture ) => {
   try {
     const userID = getUserIDFromRealm();
     if (!userID) {
@@ -79,7 +78,6 @@ export const handleClockIn = async (startDateTime, startPicture, shiftID) => {
     Realm.write(() => {
       Realm.create('Log', {
         attendanceID,
-        shiftID,
         startDateTime,
         startPicture,
         endDateTime: '',

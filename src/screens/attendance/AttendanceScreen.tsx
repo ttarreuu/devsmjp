@@ -260,7 +260,7 @@ const AttendanceScreen = () => {
           console.log('ClockIn & ClockOut data cleared from AsyncStorage');
         }, 60000); // 60000 ms = 1 minute
       } else {
-        await handleClockIn(now, startPic, shiftSelected);
+        await handleClockIn(now, startPic);
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
         await AsyncStorage.setItem('clockInTime', now);
