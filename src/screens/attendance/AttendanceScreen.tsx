@@ -281,6 +281,9 @@ const AttendanceScreen = () => {
         setIsAttendance(true);
         await AsyncStorage.setItem('status', 'true');
         await AsyncStorage.setItem('clockInTime', now);
+        
+        await AsyncStorage.removeItem('clockOutTime');
+        setClockOutTime('');
       }
 
       setIsHide(false);
