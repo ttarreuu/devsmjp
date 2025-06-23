@@ -171,6 +171,11 @@ const AttendanceScreen = () => {
     const status = await AsyncStorage.getItem('status');
     if(status == 'true') {
       setIsAttendance(true);
+
+      const storedShift = await AsyncStorage.getItem('selectedShift');
+      if (storedShift) {
+        setShiftSelected(JSON.parse(storedShift)); 
+      }
     } else if(status == 'false') {
       setIsAttendance(false);
     }
@@ -266,6 +271,7 @@ const AttendanceScreen = () => {
         await AsyncStorage.setItem('status', 'false');
         await AsyncStorage.setItem('clockOutTime', now);
         setShiftSelected(null);
+        await AsyncStorage.removeItem('selectedShift');
 
         setTimeout(async () => {
           await AsyncStorage.removeItem('clockInTime');
@@ -283,6 +289,10 @@ const AttendanceScreen = () => {
         await AsyncStorage.setItem('clockInTime', now);
         
         await AsyncStorage.removeItem('clockOutTime');
+        await AsyncStorage.setItem(
+          'selectedShift',
+          JSON.stringify(shiftSelected),
+        );
         setClockOutTime('');
       }
 
@@ -345,7 +355,7 @@ const AttendanceScreen = () => {
                   setOpen={setOpen}
                   setValue={setShiftSelected}
                   setItems={setItems}
-                  placeholder="SELECT SHIFT"
+                  placeholder={isAttendance ? 'Shift Selected' : 'SELECT SHIFT'}
                   style={{
                     borderColor: '#1185C8',
                     backgroundColor: '#1185C8',
